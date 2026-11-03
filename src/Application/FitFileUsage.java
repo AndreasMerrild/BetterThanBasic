@@ -3,7 +3,7 @@ package Application;
 import java.awt.*;
 import java.nio.file.Path;
 
-public class fitFileUsage {
+public class FitFileUsage {
 
     public static void printAverage(String label, Double value, String unit) {
         if (value == null) {

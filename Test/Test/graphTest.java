@@ -1,7 +1,7 @@
 package Test;
 
 import Application.Graph;
-import Application.bestPowerNumbers;
+import Application.BestPowerNumbers;
 import Fit.FitActivity;
 import Fit.FitParser;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +25,7 @@ public class graphTest {
 
     @Test
     void testPowerGraphRendersLoadedActivity() {
-        Graph graph = new Graph(bestPowerNumbers.powerPoints(activity));
+        Graph graph = new Graph(BestPowerNumbers.powerPoints(activity));
         BufferedImage image = new BufferedImage(900, 550, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = image.createGraphics();
 

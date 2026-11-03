@@ -49,7 +49,7 @@ public final class Graph extends JPanel {
         javax.swing.SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Power over time");
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            frame.setContentPane(new Graph(bestPowerNumbers.powerPoints(activity)));
+            frame.setContentPane(new Graph(BestPowerNumbers.powerPoints(activity)));
             frame.pack();
             frame.setLocationByPlatform(true);
             frame.setVisible(true);
@@ -69,7 +69,7 @@ public final class Graph extends JPanel {
         javax.swing.SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Best power duration curve");
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            frame.setContentPane(new Graph(bestPowerNumbers.bestPowerPoints(activities), true, false));
+            frame.setContentPane(new Graph(BestPowerNumbers.bestPowerPoints(activities), true, false));
             frame.pack();
             frame.setLocationByPlatform(true);
             frame.setVisible(true);
@@ -88,7 +88,7 @@ public final class Graph extends JPanel {
         javax.swing.SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Power/Weight over time");
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            frame.setContentPane(new Graph(bestPowerNumbers.bestPowerPointsWeight(activities, weight), true, true));
+            frame.setContentPane(new Graph(BestPowerNumbers.bestPowerPointsWeight(activities, weight), true, true));
             frame.pack();
             frame.setLocationByPlatform(true);
             frame.setVisible(true);

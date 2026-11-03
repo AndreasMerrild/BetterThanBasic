@@ -26,8 +26,8 @@
 - [Done] Add a way to load a folder of fit files and extract the data from them.
 - [Done] Add a way to view the best power graph with time on x axis and power on y axis.
 - [Done] Add a way to view the best power graph with time on x axis and power/weight on y axis.
-- Add a table view of best power data. 
-- Add a table view of best power/weight data.
+- [Done] Add a table view of best power data. 
+- [Done] Add a table view of best power/weight data.
 - Add a table of data on each lap in the fit file. (Averages and Max)
 - Add a way to show TSS
 - Add a way to show IF

@@ -9,14 +9,14 @@ import java.util.Comparator;
 import java.util.Collections;
 import java.util.List;
 
-public final class bestPowerNumbers {
+public final class BestPowerNumbers {
     private static final int[] BEST_POWER_INTERVALS_SECONDS = {
             1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 45, 60, 90,
             120, 180, 240, 300, 600, 720, 1200, 1800, 2400,
             3600, 7200, 10800
     };
 
-    private bestPowerNumbers() {
+    private BestPowerNumbers() {
     }
 
     public static List<PowerPoint> powerPoints(FitActivity activity) {

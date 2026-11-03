@@ -6,9 +6,6 @@ import Fit.FitParser;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.awt.FileDialog;
-import java.awt.Frame;
-import java.awt.GraphicsEnvironment;
 import java.util.Scanner;
 
 public class Running {
@@ -62,7 +59,7 @@ public class Running {
             }
             else if(firstInput==3){
                 System.out.println("Please select a FIT activity file to parse.");
-                Path file = fitFileUsage.chooseFitFile();
+                Path file = FitFileUsage.chooseFitFile();
                 if (file == null) {
                     System.out.println("No FIT file selected.");
                     return active;
@@ -73,11 +70,11 @@ public class Running {
                     System.out.println("Parsed " + activity.records().size() + " records.");
                     System.out.println("Start: " + activity.startTime());
                     System.out.println("End: " + activity.endTime());
-                    System.out.println("Duration: " + fitFileUsage.formatDuration(activity.duration()));
-                    fitFileUsage.printAverage("Average power", activity.averagePower(), " W");
-                    fitFileUsage.printAverage("Average speed", activity.averageSpeed(), " km/h");
-                    fitFileUsage.printAverage("Average cadence", activity.averageCadence(), " rpm");
-                    fitFileUsage.printAverage("Average heart rate", activity.averageHeartRate(), " bpm");
+                    System.out.println("Duration: " + FitFileUsage.formatDuration(activity.duration()));
+                    FitFileUsage.printAverage("Average power", activity.averagePower(), " W");
+                    FitFileUsage.printAverage("Average speed", activity.averageSpeed(), " km/h");
+                    FitFileUsage.printAverage("Average cadence", activity.averageCadence(), " rpm");
+                    FitFileUsage.printAverage("Average heart rate", activity.averageHeartRate(), " bpm");
                     if (activity.deviceName() != null) {
                         System.out.println("Device: " + activity.deviceName());
                     }
@@ -108,12 +105,16 @@ public class Running {
                             Graph.showPowerWeightGraph(activity, w);
                         }
                         else if (choice.equals("4")) {
+                            System.out.println("Please specify the weight of the athlete in question. ");
+                            int w = scanner.nextInt();
                             System.out.println("Showing a table with best powerdata");
+                            TableBestPowerNumbers.showBestPowerTable(activity, w);
                         }
                         else if (choice.equals("5")) {
                             System.out.println("Please specify the weight of the athlete in question. ");
                             int w = scanner.nextInt();
                             System.out.println("Showing a table with best power per weight data");
+                            TableBestPowerNumbers.showBestPowerTable(activity, w);
                         }
                         else {
                             System.out.println("This is not applicable at the moment please try one of the other options. ");
@@ -134,7 +135,7 @@ public class Running {
                     System.out.println("No directory specified.");
                     return active;
                 }
-                multiFileUsage usage = new multiFileUsage();
+                MultiFileUsage usage = new MultiFileUsage();
                 try {
                     usage.loadFiles(Path.of(directoryText));
                     usage.printSummary();
@@ -148,6 +149,8 @@ public class Running {
                     System.out.println("0: Nothing other than averages");
                     System.out.println("1: Show the best power graph");
                     System.out.println("2: Show the best Power/kg graph");
+                    System.out.println("3: Show the best power table");
+                    System.out.println("4: Calculate FTP from the best 20 min");
                     String choice = scanner.next();
                     if (choice.equals("0")) {
                         System.out.println("Returning to the start screen");
@@ -164,13 +167,16 @@ public class Running {
                         Graph.showPowerWeightGraph(usage.activities(), w);
                     }
                     else if (choice.equals("3")) {
+                        System.out.println("Please specify the weight of the athlete in question. ");
+                        int w = scanner.nextInt();
+                        System.out.println("Showing a table with best power data");
+                        TableBestPowerNumbers.showBestPowerTable(usage.activities(), w);
+                    }
+                    else if (choice.equals("4")) {
                         System.out.println("Calculating FTP from the best 20 min");
                         ftp myFtp = new ftp("Athlete", null);
                         double ftp = myFtp.ftpCalc(usage.bestTwentyMinutePower());
                         System.out.println("The FTP is: " + ftp);
-                    }
-                    else if (choice.equals("4")) {
-
                     }
                     else {
                         System.out.println("This is not applicable at the moment please try one of the other options. ");

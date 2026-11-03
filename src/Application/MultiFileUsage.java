@@ -19,7 +19,7 @@ import java.util.Locale;
  * The parsed activities are kept together so that later graph and comparison
  * functionality can use the same in-memory data.
  */
-public class multiFileUsage {
+public class MultiFileUsage {
     private final List<FitActivity> activities = new ArrayList<>();
 
     /**
@@ -71,7 +71,7 @@ public class multiFileUsage {
      */
     public double totalDistanceKilometers() {
         return activities.stream()
-                .mapToDouble(multiFileUsage::distanceKilometers)
+                .mapToDouble(MultiFileUsage::distanceKilometers)
                 .sum();
     }
 
@@ -85,10 +85,10 @@ public class multiFileUsage {
             FitActivity activity = activities.get(index);
             System.out.printf("%d. Duration: %s, Distance: %.2f km%n",
                     index + 1,
-                    fitFileUsage.formatDuration(activity.duration()),
+                    FitFileUsage.formatDuration(activity.duration()),
                     distanceKilometers(activity));
         }
-        System.out.println("Total time: " + fitFileUsage.formatDuration(totalDuration()));
+        System.out.println("Total time: " + FitFileUsage.formatDuration(totalDuration()));
         System.out.printf("Total distance: %.2f km%n", totalDistanceKilometers());
     }
 
