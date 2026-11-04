@@ -83,13 +83,15 @@ public class MultiFileUsage {
 
         for (int index = 0; index < activities.size(); index++) {
             FitActivity activity = activities.get(index);
-            System.out.printf("%d. Duration: %s, Distance: %.2f km%n",
+            System.out.printf("%d. Duration: %s, Distance: %.2f km, NP: %.2f W%n",
                     index + 1,
                     FitFileUsage.formatDuration(activity.duration()),
-                    distanceKilometers(activity));
+                    distanceKilometers(activity),
+                    activity.normalizedPower());
         }
         System.out.println("Total time: " + FitFileUsage.formatDuration(totalDuration()));
         System.out.printf("Total distance: %.2f km%n", totalDistanceKilometers());
+        System.out.printf("Average speed: %.2f km/h%n", totalDistanceKilometers() / (totalDuration().toSeconds() / 3600.0));
     }
 
     public static double distanceKilometers(FitActivity activity) {
