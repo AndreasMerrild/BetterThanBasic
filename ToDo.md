@@ -28,6 +28,7 @@
 - [Done] Add a way to view the best power graph with time on x axis and power/weight on y axis.
 - [Done] Add a table view of best power data. 
 - [Done] Add a table view of best power/weight data.
+- [Done] Added a way to get FTP from the best 20 minute power over the entire history of fit files loaded.
 - Add a table of data on each lap in the fit file. (Averages and Max)
 - Add a way to show TSS
 - Add a way to show IF

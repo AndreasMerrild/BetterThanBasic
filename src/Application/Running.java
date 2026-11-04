@@ -174,8 +174,7 @@ public class Running {
                     }
                     else if (choice.equals("4")) {
                         System.out.println("Calculating FTP from the best 20 min");
-                        ftp myFtp = new ftp("Athlete", null);
-                        double ftp = myFtp.ftpCalc(usage.bestTwentyMinutePower());
+                        double ftp = BestPowerNumbers.bestTwentyHist(usage.activities());
                         System.out.println("The FTP is: " + ftp);
                     }
                     else {

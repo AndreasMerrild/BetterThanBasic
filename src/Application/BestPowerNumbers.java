@@ -19,6 +19,30 @@ public final class BestPowerNumbers {
     private BestPowerNumbers() {
     }
 
+    public static double bestTwentyHist(List<FitActivity> activity) {
+        double ftp = 0.0;
+        for (FitActivity act : activity) {
+            if(act.duration().toSeconds()<20*60){
+                continue;
+            }
+            double bestTwenty = bestTwenty(act);
+            if (bestTwenty > ftp) {
+                 ftp = bestTwenty*0.95;
+            }
+        }
+        return ftp;
+    }
+
+    public static double bestTwenty (FitActivity activity) {
+        double ftp = 0.0;
+        int twentyminutes = 20*60;
+        if(activity.averagePower()==null || activity.duration().toSeconds()<twentyminutes){
+            return 0.0;
+        }
+        ftp = bestPowerWatts(activity, twentyminutes);
+        return ftp;
+    }
+
     public static List<PowerPoint> powerPoints(FitActivity activity) {
         if (activity == null || activity.startTime() == null) {
             return List.of();
