@@ -13,12 +13,17 @@ public record FitActivity(
         String deviceName,
         Instant startTime,
         Instant endTime,
+        Integer functionalThresholdPower,
         List<FitRecord> records) {
 
     private static final double METERS_PER_SECOND_TO_KILOMETERS_PER_HOUR = 3.6;
 
     public FitActivity {
         records = List.copyOf(records);
+    }
+
+    public FitActivity(String deviceName, Instant startTime, Instant endTime, List<FitRecord> records) {
+        this(deviceName, startTime, endTime, null, records);
     }
 
     public Duration duration() {
@@ -34,11 +39,12 @@ public record FitActivity(
         }
         return TSS();
     }
+
     public double intensityFactor(){
-        if (startTime == null || endTime == null) {
+        if (functionalThresholdPower == null || functionalThresholdPower <= 0) {
             return 0.0;
         }
-        return intensityFactor();
+        return normalizedPower() / functionalThresholdPower;
     }
     public double normalizedPower(){
         if ((startTime == null || endTime == null)||(averagePower()==null)) {
@@ -46,16 +52,6 @@ public record FitActivity(
         }
         records.stream().map(FitRecord::power).toList();
 
-            /**
-             * rolling average 30 seconds
-             *
-             * rolling_avg_pwr = rolling_avg^4
-             *
-             * avg_powered_values = average.rolloing_avg_pwr
-             *
-             * normalizedPower = avg_powered_values^0.25
-             */
-            // Implementation for normalized power calculation
             double normalizedPower = 0.0;
             List<Double> rolling30sAveragePower = rolling30SecondAveragePower();
             if (rolling30sAveragePower.isEmpty()) {

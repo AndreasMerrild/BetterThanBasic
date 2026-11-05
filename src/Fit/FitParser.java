@@ -5,6 +5,7 @@ import com.garmin.fit.FileIdMesg;
 import com.garmin.fit.Mesg;
 import com.garmin.fit.MesgListener;
 import com.garmin.fit.RecordMesg;
+import com.garmin.fit.SessionMesg;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,6 +35,8 @@ public final class FitParser {
             decoder.addListener((MesgListener) mesg -> {
                 if ("file_id".equals(mesg.getName())) {
                     metadata.accept(new FileIdMesg(mesg));
+                } else if ("session".equals(mesg.getName())) {
+                    metadata.accept(new SessionMesg(mesg));
                 } else if ("record".equals(mesg.getName())) {
                     records.add(toRecord(new RecordMesg(mesg)));
                 }
@@ -48,7 +51,8 @@ public final class FitParser {
 
         Instant start = records.isEmpty() ? null : records.get(0).timestamp();
         Instant end = records.isEmpty() ? null : records.get(records.size() - 1).timestamp();
-        return new FitActivity(metadata.deviceName, start, end, records);
+        return new FitActivity(metadata.deviceName, start, end,
+                metadata.functionalThresholdPower, records);
     }
 
     private static FitRecord toRecord(RecordMesg record) {
@@ -64,9 +68,16 @@ public final class FitParser {
 
     private static final class ActivityMetadata {
         private String deviceName;
+        private Integer functionalThresholdPower;
 
         private void accept(FileIdMesg fileId) {
             deviceName = fileId.getProductName();
+        }
+
+        private void accept(SessionMesg session) {
+            if (functionalThresholdPower == null) {
+                functionalThresholdPower = session.getThresholdPower();
+            }
         }
     }
 }

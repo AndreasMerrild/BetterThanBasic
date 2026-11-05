@@ -75,6 +75,13 @@ public class Running {
                     FitFileUsage.printAverage("Average speed", activity.averageSpeed(), " km/h");
                     FitFileUsage.printAverage("Average cadence", activity.averageCadence(), " rpm");
                     FitFileUsage.printAverage("Average heart rate", activity.averageHeartRate(), " bpm");
+                    if (activity.functionalThresholdPower() != null) {
+                        System.out.println("Head unit FTP: " + activity.functionalThresholdPower() + " W");
+                        System.out.printf("Intensity factor: %.3f%n", activity.intensityFactor());
+                    } else {
+                        System.out.println("Head unit FTP: unavailable (not stored in the FIT file).");
+                        System.out.println("Intensity factor: unavailable (FTP was not stored in the FIT file).");
+                    }
                     if (activity.deviceName() != null) {
                         System.out.println("Device: " + activity.deviceName());
                     }
