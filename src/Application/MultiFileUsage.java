@@ -86,12 +86,16 @@ public class MultiFileUsage {
             String intensityFactor = activity.functionalThresholdPower() == null
                     ? "unavailable"
                     : String.format(Locale.ROOT, "%.3f", activity.intensityFactor());
-            System.out.printf("%d. Duration: %s, Distance: %.2f km, NP: %.2f W, IF: %s%n",
+            String trainingStressScore = activity.TSS() == 0.0
+                    ? "unavailable"
+                    : String.format(Locale.ROOT, "%.2f", activity.TSS());
+            System.out.printf("%d. Duration: %s, Distance: %.2f km, NP: %.2f W, IF: %s%n, TSS: %s%n",
                     index + 1,
                     FitFileUsage.formatDuration(activity.duration()),
                     distanceKilometers(activity),
                     activity.normalizedPower(),
-                    intensityFactor);
+                    intensityFactor,
+                    trainingStressScore);
         }
         System.out.println("Total time: " + FitFileUsage.formatDuration(totalDuration()));
         System.out.printf("Total distance: %.2f km%n", totalDistanceKilometers());

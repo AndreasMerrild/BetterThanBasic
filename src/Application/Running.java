@@ -78,9 +78,11 @@ public class Running {
                     if (activity.functionalThresholdPower() != null) {
                         System.out.println("Head unit FTP: " + activity.functionalThresholdPower() + " W");
                         System.out.printf("Intensity factor: %.3f%n", activity.intensityFactor());
+                        System.out.printf("training stress score: %.2f%n", activity.TSS());
                     } else {
                         System.out.println("Head unit FTP: unavailable (not stored in the FIT file).");
                         System.out.println("Intensity factor: unavailable (FTP was not stored in the FIT file).");
+                        System.out.println("Training stress score: unavailable (power was not stored in the FIT file).");
                     }
                     if (activity.deviceName() != null) {
                         System.out.println("Device: " + activity.deviceName());

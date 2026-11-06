@@ -37,7 +37,14 @@ public record FitActivity(
         if (startTime == null || endTime == null) {
             return 0.0;
         }
-        return TSS();
+        double trainingStressScore = 0.0;
+        if(averagePower()==null || averagePower()<=0){
+            return 0.0;
+        }
+        if (functionalThresholdPower != null && functionalThresholdPower > 0) {
+            trainingStressScore = ((duration().toSeconds()*normalizedPower()*intensityFactor())/(functionalThresholdPower*3600))*100;
+        }
+        return trainingStressScore;
     }
 
     public double intensityFactor(){
