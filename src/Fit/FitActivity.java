@@ -33,6 +33,16 @@ public record FitActivity(
         return Duration.between(startTime, endTime);
     }
 
+    public double VI(){
+        if (functionalThresholdPower == null || functionalThresholdPower <= 0) {
+            return 0.0;
+        }
+        if (normalizedPower() <= 0) {
+            return 0.0;
+        }
+        return normalizedPower()/averagePower();
+    }
+
     public double TSS(){
         if (startTime == null || endTime == null) {
             return 0.0;
