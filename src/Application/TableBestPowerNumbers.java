@@ -32,12 +32,16 @@ public final class TableBestPowerNumbers extends JPanel {
     private static final String[] COLUMN_NAMES = {"Duration", "Power", "Power to weight"};
 
     public TableBestPowerNumbers(List<FitActivity> activities, int weight) {
+        this(activities, weight, null);
+    }
+
+    public TableBestPowerNumbers(List<FitActivity> activities, int weight, Integer days) {
         super(new BorderLayout(0, 4));
         if (weight <= 0) {
             throw new IllegalArgumentException("Weight must be greater than zero.");
         }
 
-        List<PowerPoint> points = BestPowerNumbers.bestPowerPoints(activities);
+        List<PowerPoint> points = bestPowerPoints(activities, days);
         JTable table = new JTable(new BestPowerTableModel(points, weight));
         table.setFillsViewportHeight(true);
         table.setRowHeight(22);
@@ -64,11 +68,22 @@ public final class TableBestPowerNumbers extends JPanel {
         setBackground(Color.WHITE);
     }
 
+    private static List<PowerPoint> bestPowerPoints(
+            List<FitActivity> activities, Integer days) {
+        return days == null
+                ? BestPowerNumbers.bestPowerPoints(activities)
+                : BestPowerNumbers.bestPowerPoints(activities, days);
+    }
+
     public static void showBestPowerTable(FitActivity activity, int weight) {
         showBestPowerTable(Collections.singletonList(activity), weight);
     }
 
     public static void showBestPowerTable(List<FitActivity> activities, int weight) {
+        showBestPowerTable(activities, weight, null);
+    }
+
+    public static void showBestPowerTable(List<FitActivity> activities, int weight, Integer days) {
         Objects.requireNonNull(activities, "activities");
         if (weight <= 0) {
             throw new IllegalArgumentException("Weight must be greater than zero.");
@@ -81,7 +96,7 @@ public final class TableBestPowerNumbers extends JPanel {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Best power duration table");
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            frame.setContentPane(new TableBestPowerNumbers(activities, weight));
+            frame.setContentPane(new TableBestPowerNumbers(activities, weight, days));
             frame.pack();
             frame.setLocationByPlatform(true);
             frame.setVisible(true);

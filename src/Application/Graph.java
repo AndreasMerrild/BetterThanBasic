@@ -61,6 +61,10 @@ public final class Graph extends JPanel {
     }
 
     public static void showBestPowerGraph(List<FitActivity> activities) {
+        showBestPowerGraph(activities, null);
+    }
+
+    public static void showBestPowerGraph(List<FitActivity> activities, Integer days) {
         if (java.awt.GraphicsEnvironment.isHeadless()) {
             System.out.println("Cannot display the power graph because Java is running in headless mode.");
             return;
@@ -69,7 +73,7 @@ public final class Graph extends JPanel {
         javax.swing.SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Best power duration curve");
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            frame.setContentPane(new Graph(BestPowerNumbers.bestPowerPoints(activities), true, false));
+            frame.setContentPane(new Graph(bestPowerPoints(activities, days), true, false));
             frame.pack();
             frame.setLocationByPlatform(true);
             frame.setVisible(true);
@@ -77,6 +81,10 @@ public final class Graph extends JPanel {
     }
 
     public static void showPowerWeightGraph(List<FitActivity> activities, int weight) {
+        showPowerWeightGraph(activities, weight, null);
+    }
+
+    public static void showPowerWeightGraph(List<FitActivity> activities, int weight, Integer days) {
         if (weight <= 0) {
             throw new IllegalArgumentException("Weight must be greater than zero.");
         }
@@ -88,11 +96,24 @@ public final class Graph extends JPanel {
         javax.swing.SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Power/Weight over time");
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            frame.setContentPane(new Graph(BestPowerNumbers.bestPowerPointsWeight(activities, weight), true, true));
+            frame.setContentPane(new Graph(bestPowerPoints(activities, weight, days), true, true));
             frame.pack();
             frame.setLocationByPlatform(true);
             frame.setVisible(true);
         });
+    }
+
+    private static List<PowerPoint> bestPowerPoints(List<FitActivity> activities, Integer days) {
+        return days == null
+                ? BestPowerNumbers.bestPowerPoints(activities)
+                : BestPowerNumbers.bestPowerPoints(activities, days);
+    }
+
+    private static List<PowerPoint> bestPowerPoints(
+            List<FitActivity> activities, int weight, Integer days) {
+        return days == null
+                ? BestPowerNumbers.bestPowerPointsWeight(activities, weight)
+                : BestPowerNumbers.bestPowerPointsWeight(activities, weight, days);
     }
 
     @Override

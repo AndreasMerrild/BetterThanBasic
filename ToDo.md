@@ -18,10 +18,10 @@
 - [Done] Add a way to show the NP
 - [Done] Add a way to show the VI
 - Add a table of data on each lap in the fit file. (Averages and Max)
-- Add a way to show the best power for each duration of time. 
-  - Last 90 days
-  - Last 30 days
-  - Last 7 days
+- [Done] Add a way to show the best power for each duration of time. 
+  - [Done] Last 90 days
+  - [Done] Last 30 days
+  - [Done] Last 7 days
 
 # Training compound
 - For a longer period of time, add a way to show the CTL, ATL, and TSB.

@@ -167,23 +167,25 @@ public class Running {
                     }
                     else if (choice.equals("1")) {
                         System.out.println("Showing a graph with best power data");
-                        Graph.showBestPowerGraph(usage.activities());
+                        Graph.showBestPowerGraph(usage.activities(), readBestPowerDays(scanner));
                     }
                     else if (choice.equals("2")) {
                         System.out.println("Please specify the weight of the athlete in question. ");
                         int w = scanner.nextInt();
                         System.out.println("Showing a graph with best power per weight data");
-                        Graph.showPowerWeightGraph(usage.activities(), w);
+                        Graph.showPowerWeightGraph(usage.activities(), w, readBestPowerDays(scanner));
                     }
                     else if (choice.equals("3")) {
                         System.out.println("Please specify the weight of the athlete in question. ");
                         int w = scanner.nextInt();
                         System.out.println("Showing a table with best power data");
-                        TableBestPowerNumbers.showBestPowerTable(usage.activities(), w);
+                        TableBestPowerNumbers.showBestPowerTable(
+                                usage.activities(), w, readBestPowerDays(scanner));
                     }
                     else if (choice.equals("4")) {
                         System.out.println("Calculating FTP from the best 20 min");
-                        double ftp = BestPowerNumbers.bestTwentyHist(usage.activities());
+                        double ftp = BestPowerNumbers.bestTwentyHist(
+                                usage.activities(), readBestPowerDays(scanner));
                         System.out.println("The FTP is: " + ftp);
                     }
                     else {
@@ -201,6 +203,15 @@ public class Running {
 
             }
             return active;
+        }
+
+        private int readBestPowerDays(Scanner scanner) {
+            System.out.println("Check activities from the last N days (0 for all-time):");
+            int days = scanner.nextInt();
+            if (days < 0) {
+                throw new IllegalArgumentException("Days must not be negative.");
+            }
+            return days;
         }
 
 

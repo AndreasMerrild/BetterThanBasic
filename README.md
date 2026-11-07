@@ -27,3 +27,8 @@ Choose `4 : Parse multiple .fit activity files` to enter a directory containing
 FIT files. The application keeps all parsed activities in memory and prints the
 duration and distance for each file, followed by the combined total time and
 distance. Distance is calculated from the recorded FIT speeds and timestamps.
+
+Best-power graphs, tables, and the best-20-minute FTP calculation can be
+limited to activities from the last N days. Enter `7`, `90`, or another
+non-negative number when prompted; enter `0` to use all activities (the
+default all-time behavior).

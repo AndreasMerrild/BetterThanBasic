@@ -3,7 +3,9 @@ package Application;
 import Fit.FitActivity;
 import Fit.FitRecord;
 
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Collections;
@@ -20,8 +22,17 @@ public final class BestPowerNumbers {
     }
 
     public static double bestTwentyHist(List<FitActivity> activity) {
+        return bestTwentyHist(activity, null);
+    }
+
+    public static double bestTwentyHist(List<FitActivity> activities, int days) {
+        return bestTwentyHist(activities, Integer.valueOf(days));
+    }
+
+    private static double bestTwentyHist(List<FitActivity> activities, Integer days) {
+        List<FitActivity> selected = selectActivities(activities, days);
         double ftp = 0.0;
-        for (FitActivity act : activity) {
+        for (FitActivity act : selected) {
             if(act.duration().toSeconds()<20*60){
                 continue;
             }
@@ -71,14 +82,27 @@ public final class BestPowerNumbers {
     }
 
     public static List<PowerPoint> bestPowerPoints(List<FitActivity> activities) {
-        return combineBestPowerPoints(activities, 0);
+        return bestPowerPoints(activities, null, 0);
+    }
+
+    /**
+     * Calculates best power using only activities from the last {@code days} days.
+     * A value of zero includes every activity. The existing overload without
+     * {@code days} remains the all-time calculation.
+     */
+    public static List<PowerPoint> bestPowerPoints(List<FitActivity> activities, int days) {
+        return bestPowerPoints(activities, Integer.valueOf(days), 0);
     }
 
     public static List<PowerPoint> bestPowerPointsWeight(List<FitActivity> activities, int weight) {
-        if (weight <= 0) {
-            throw new IllegalArgumentException("Weight must be greater than zero.");
-        }
-        return combineBestPowerPoints(activities, weight);
+        validateWeight(weight);
+        return bestPowerPoints(activities, null, weight);
+    }
+
+    public static List<PowerPoint> bestPowerPointsWeight(
+            List<FitActivity> activities, int weight, int days) {
+        validateWeight(weight);
+        return bestPowerPoints(activities, Integer.valueOf(days), weight);
     }
 
     public static Double bestPowerWatts(FitActivity activity, int intervalSeconds) {
@@ -122,6 +146,39 @@ public final class BestPowerNumbers {
             }
         }
         return List.copyOf(result);
+    }
+
+    private static List<PowerPoint> bestPowerPoints(
+            List<FitActivity> activities, Integer days, int weight) {
+        return combineBestPowerPoints(selectActivities(activities, days), weight);
+    }
+
+    private static void validateWeight(int weight) {
+        if (weight <= 0) {
+            throw new IllegalArgumentException("Weight must be greater than zero.");
+        }
+    }
+
+    private static List<FitActivity> selectActivities(
+            List<FitActivity> activities, Integer days) {
+        if (days != null && days < 0) {
+            throw new IllegalArgumentException("Days must not be negative.");
+        }
+        if (activities == null || activities.isEmpty()) {
+            return List.of();
+        }
+        if (days == null || days == 0) {
+            return List.copyOf(activities);
+        }
+        Clock clock = Clock.systemUTC();
+        Instant now = clock.instant();
+        Instant cutoff = now.minus(Duration.ofDays(days.longValue()));
+        return activities.stream()
+                .filter(activity -> activity != null
+                        && activity.startTime() != null
+                        && !activity.startTime().isBefore(cutoff)
+                        && !activity.startTime().isAfter(now))
+                .toList();
     }
 
     private static Double bestPowerWatts(List<PowerPoint> raw, int intervalSeconds) {
