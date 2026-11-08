@@ -64,10 +64,9 @@ public class Running {
                     System.out.println("No FIT file selected.");
                     return active;
                 }
-
+                System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
                 try {
                     FitActivity activity = new FitParser().parse(file);
-                    System.out.println("Parsed " + activity.records().size() + " records.");
                     System.out.println("Start: " + activity.startTime());
                     System.out.println("End: " + activity.endTime());
                     System.out.println("Duration: " + FitFileUsage.formatDuration(activity.duration()));
@@ -75,10 +74,14 @@ public class Running {
                     FitFileUsage.printAverage("Average speed", activity.averageSpeed(), " km/h");
                     FitFileUsage.printAverage("Average cadence", activity.averageCadence(), " rpm");
                     FitFileUsage.printAverage("Average heart rate", activity.averageHeartRate(), " bpm");
+
                     if (activity.functionalThresholdPower() != null) {
+                        System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
                         System.out.println("Head unit FTP: " + activity.functionalThresholdPower() + " W");
                         System.out.printf("Intensity factor: %.3f%n", activity.intensityFactor());
                         System.out.printf("training stress score: %.2f%n", activity.TSS());
+                        System.out.println("Normalized power: " + String.format("%.2f", activity.normalizedPower()) + " W");
+                        System.out.println("Variability index: " + String.format("%.3f", activity.VI()));
                     } else {
                         System.out.println("Head unit FTP: unavailable (not stored in the FIT file).");
                         System.out.println("Intensity factor: unavailable (FTP was not stored in the FIT file).");
@@ -87,6 +90,7 @@ public class Running {
                     if (activity.deviceName() != null) {
                         System.out.println("Device: " + activity.deviceName());
                     }
+                    System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
                     boolean m = true;
                     while(m) {
                         System.out.println("What do you want shown? ");
