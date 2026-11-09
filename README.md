@@ -1,9 +1,13 @@
-# FTPCalc
+# BetterThanBasic
 
 This is a project which will at some point make a power analytics software. 
-Though as of yet, it only has a simple calculator for FTP, the Zones and Power to Weight ratio.
+It right now has the functions:
+- Get training zones based on best 20 minutes power numbers (FTP - Coggan 7 zone)
+- Look at a single training and getting averages of that file, look at the power graph, get the best power numbers for durations
+- Look at many trainings and getting a summary of the data, look at the best power numbers for durations.
 
-Run the Main application and input the metrics that are asked for (name, weight, Power)
+
+Run the Main application and input the number for the part you want. 
 
 ## FIT files
 
