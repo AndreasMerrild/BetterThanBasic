@@ -70,6 +70,22 @@ public final class BestPowerNumbers {
         return smooth(points);
     }
 
+    public static List<PowerPoint> heartRatePoints(FitActivity activity) {
+        if (activity == null || activity.startTime() == null) {
+            return List.of();
+        }
+
+        List<PowerPoint> points = new ArrayList<>();
+        for (FitRecord record : activity.records()) {
+            if (record.timestamp() != null && record.heartRate() != null) {
+                double seconds = Duration.between(activity.startTime(), record.timestamp()).toMillis() / 1000.0;
+                points.add(new PowerPoint(Math.max(seconds, 0), record.heartRate()));
+            }
+        }
+        points.sort(Comparator.comparingDouble(PowerPoint::seconds));
+        return List.copyOf(points);
+    }
+
     public static List<PowerPoint> bestPowerPoints(FitActivity activity) {
         return bestPowerPoints(Collections.singletonList(activity));
     }

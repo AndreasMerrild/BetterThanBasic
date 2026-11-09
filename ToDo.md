@@ -31,7 +31,7 @@
 - Add a graph to show the CTL, ATL, and TSB over time.
 
 # Heart Rate based
-- Add a way to show the HR Graph over time.
+- [Done] Add a way to show the HR Graph over time.
 - Add a way to show the HR Graph over time with the power data.
 - Add a way to show the HR Graph over time with the power data and the cadence data
 - Add a way to show the Avg HR, Max HR, and Min HR for the entire fit file.

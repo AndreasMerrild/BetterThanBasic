@@ -26,6 +26,8 @@ The application also opens a power-over-time line graph for records containing
 both a timestamp and power value. The graph uses a 3-second moving average,
 shows time in minutes, uses 100 W intervals on the power axis with headroom
 above the maximum power, and draws only the smoothed line.
+The single-activity menu also offers a heart-rate-over-time graph. It uses the
+timestamped heart-rate samples directly, without smoothing.
 
 Choose `4 : Parse multiple .fit activity files` to enter a directory containing
 FIT files. The application keeps all parsed activities in memory and prints the

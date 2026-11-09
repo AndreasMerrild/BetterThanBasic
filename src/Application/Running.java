@@ -96,10 +96,11 @@ public class Running {
                         System.out.println("What do you want shown? ");
                         System.out.println("0: Nothing other than averages");
                         System.out.println("1: Show the power graph");
-                        System.out.println("2: Show the best Power graph");
-                        System.out.println("3: Show the best Power/kg graph");
-                        System.out.println("4: Show the best power table");
-                        System.out.println("5: Show the best Power/kg table");
+                        System.out.println("2: Show the heart-rate graph");
+                        System.out.println("3: Show the best Power graph");
+                        System.out.println("4: Show the best Power/kg graph");
+                        System.out.println("5: Show the best power table");
+                        System.out.println("6: Show the best Power/kg table");
                         String choice = scanner.next();
                         if (choice.equals("0")) {
                             System.out.println("Returning to the start screen");
@@ -109,21 +110,24 @@ public class Running {
                             Graph.showPowerGraph(activity);
                         }
                         else if (choice.equals("2")) {
-                            Graph.showBestPowerGraph(activity);
+                            Graph.showHeartRateGraph(activity);
                         }
                         else if (choice.equals("3")) {
+                            Graph.showBestPowerGraph(activity);
+                        }
+                        else if (choice.equals("4")) {
                             System.out.println("Please specify the weight of the athlete in question. ");
                             int w = scanner.nextInt();
                             System.out.println("Showing a graph with best power per weight data");
                             Graph.showPowerWeightGraph(activity, w);
                         }
-                        else if (choice.equals("4")) {
+                        else if (choice.equals("5")) {
                             System.out.println("Please specify the weight of the athlete in question. ");
                             int w = scanner.nextInt();
                             System.out.println("Showing a table with best powerdata");
                             TableBestPowerNumbers.showBestPowerTable(activity, w);
                         }
-                        else if (choice.equals("5")) {
+                        else if (choice.equals("6")) {
                             System.out.println("Please specify the weight of the athlete in question. ");
                             int w = scanner.nextInt();
                             System.out.println("Showing a table with best power per weight data");

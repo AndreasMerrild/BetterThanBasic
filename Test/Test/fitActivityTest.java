@@ -45,6 +45,24 @@ public class fitActivityTest {
                 BestPowerNumbers.bestPowerPoints(List.of(), -1));
     }
 
+    @Test
+    void heartRatePointsUseRawTimestampedSamplesWithoutSmoothing() {
+        Instant start = Instant.EPOCH;
+        FitActivity activity = new FitActivity(
+                null,
+                start,
+                start.plusSeconds(2),
+                List.of(
+                        new FitRecord(start, null, 100, null, null),
+                        new FitRecord(start.plusSeconds(1), null, 150, null, null),
+                        new FitRecord(start.plusSeconds(2), null, null, null, null)));
+
+        assertEquals(List.of(
+                new Application.PowerPoint(0, 100),
+                new Application.PowerPoint(1, 150)),
+                BestPowerNumbers.heartRatePoints(activity));
+    }
+
     private static FitActivity powerActivity(Instant start, double power) {
         return new FitActivity(
                 null,

@@ -25,14 +25,17 @@ public final class Graph extends JPanel {
     private final List<PowerPoint> points;
     private final boolean bestPowerGraph;
     private final boolean powerWeightGraph;
+    private final boolean heartRateGraph;
 
     public Graph(List<PowerPoint> points) {
-        this(points, false, false);
+        this(points, false, false, false);
     }
 
-    private Graph(List<PowerPoint> points, boolean bestPowerGraph, boolean powerWeightGraph) {
+    private Graph(List<PowerPoint> points, boolean bestPowerGraph,
+                  boolean powerWeightGraph, boolean heartRateGraph) {
         this.bestPowerGraph = bestPowerGraph;
         this.powerWeightGraph = powerWeightGraph;
+        this.heartRateGraph = heartRateGraph;
         this.points = List.copyOf(points);
         setPreferredSize(new Dimension(900, 550));
         setBackground(Color.WHITE);
@@ -56,6 +59,23 @@ public final class Graph extends JPanel {
         });
     }
 
+    public static void showHeartRateGraph(FitActivity activity) {
+        if (java.awt.GraphicsEnvironment.isHeadless()) {
+            System.out.println("Cannot display the heart-rate graph because Java is running in headless mode.");
+            return;
+        }
+
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Heart rate over time");
+            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            frame.setContentPane(new Graph(BestPowerNumbers.heartRatePoints(activity),
+                    false, false, true));
+            frame.pack();
+            frame.setLocationByPlatform(true);
+            frame.setVisible(true);
+        });
+    }
+
     public static void showBestPowerGraph(FitActivity activity) {
         showBestPowerGraph(Collections.singletonList(activity));
     }
@@ -73,7 +93,7 @@ public final class Graph extends JPanel {
         javax.swing.SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Best power duration curve");
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            frame.setContentPane(new Graph(bestPowerPoints(activities, days), true, false));
+            frame.setContentPane(new Graph(bestPowerPoints(activities, days), true, false, false));
             frame.pack();
             frame.setLocationByPlatform(true);
             frame.setVisible(true);
@@ -96,7 +116,7 @@ public final class Graph extends JPanel {
         javax.swing.SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Power/Weight over time");
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            frame.setContentPane(new Graph(bestPowerPoints(activities, weight, days), true, true));
+            frame.setContentPane(new Graph(bestPowerPoints(activities, weight, days), true, true, false));
             frame.pack();
             frame.setLocationByPlatform(true);
             frame.setVisible(true);
@@ -126,6 +146,8 @@ public final class Graph extends JPanel {
             if (points.isEmpty()) {
                 drawCenteredMessage(g, bestPowerGraph
                         ? "No power data for the requested intervals available."
+                        : heartRateGraph
+                        ? "No heart-rate data with timestamps available."
                         : "No power data with timestamps available.");
                 return;
             }
@@ -134,9 +156,14 @@ public final class Graph extends JPanel {
             int plotHeight = getHeight() - TOP_MARGIN - BOTTOM_MARGIN;
             double maxTimeMinutes = Math.max(points.get(points.size() - 1).seconds() / 60.0, 1);
             double maxPower = Math.max(points.stream().mapToDouble(PowerPoint::power).max().orElse(1), 1);
-            double chartMaxPower = powerWeightGraph
-                    ? Math.ceil(maxPower) + 1
-                    : Math.ceil(maxPower / 100.0) * 100.0 + 100.0;
+            double chartMaxPower;
+            if (heartRateGraph) {
+                chartMaxPower = Math.ceil(maxPower / 10.0) * 10.0 + 10.0;
+            } else {
+                chartMaxPower = powerWeightGraph
+                        ? Math.ceil(maxPower) + 1
+                        : Math.ceil(maxPower / 100.0) * 100.0 + 100.0;
+            }
 
             g.setColor(Color.DARK_GRAY);
             g.drawLine(LEFT_MARGIN, TOP_MARGIN, LEFT_MARGIN, TOP_MARGIN + plotHeight);
@@ -145,7 +172,8 @@ public final class Graph extends JPanel {
             if (bestPowerGraph) {
                 drawBestPowerAxisTicks(g, maxTimeMinutes, chartMaxPower, plotWidth, plotHeight);
             } else {
-                drawAxisTicks(g, maxTimeMinutes, chartMaxPower, plotWidth, plotHeight);
+                drawAxisTicks(g, maxTimeMinutes, chartMaxPower, plotWidth, plotHeight,
+                        heartRateGraph ? 10 : 100);
             }
 
             g.setColor(new Color(35, 100, 190));
@@ -172,7 +200,9 @@ public final class Graph extends JPanel {
             g.drawString(xAxisLabel, LEFT_MARGIN + (plotWidth - metrics.stringWidth(xAxisLabel)) / 2,
                     getHeight() - 15);
             g.rotate(-Math.PI / 2);
-            String yAxisLabel = powerWeightGraph ? "Power/Weight (W/kg)" : "Power (W)";
+            String yAxisLabel = heartRateGraph
+                    ? "Heart rate (bpm)"
+                    : powerWeightGraph ? "Power/Weight (W/kg)" : "Power (W)";
             g.drawString(yAxisLabel, -(TOP_MARGIN + plotHeight / 2 + metrics.stringWidth(yAxisLabel) / 2), 20);
         } finally {
             g.dispose();
@@ -180,7 +210,7 @@ public final class Graph extends JPanel {
     }
 
     private void drawAxisTicks(Graphics2D g, double maxTimeMinutes, double maxPower,
-                               int plotWidth, int plotHeight) {
+                               int plotWidth, int plotHeight, int tickSize) {
         FontMetrics metrics = g.getFontMetrics();
         for (int i = 0; i <= AXIS_TICK_COUNT; i++) {
             double fraction = (double) i / AXIS_TICK_COUNT;
@@ -195,7 +225,7 @@ public final class Graph extends JPanel {
                     TOP_MARGIN + plotHeight + metrics.getAscent() + 8);
         }
 
-        for (int power = 0; power <= maxPower; power += 100) {
+        for (int power = 0; power <= maxPower; power += tickSize) {
             double fraction = power / maxPower;
             int y = (int) Math.round(TOP_MARGIN + plotHeight - fraction * plotHeight);
 
