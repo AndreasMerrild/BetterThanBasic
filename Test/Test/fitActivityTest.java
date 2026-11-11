@@ -63,6 +63,24 @@ public class fitActivityTest {
                 BestPowerNumbers.heartRatePoints(activity));
     }
 
+    @Test
+    void cadencePointsUseRawTimestampedSamplesWithoutSmoothing() {
+        Instant start = Instant.EPOCH;
+        FitActivity activity = new FitActivity(
+                null,
+                start,
+                start.plusSeconds(2),
+                List.of(
+                        new FitRecord(start, null, null, null, 80),
+                        new FitRecord(start.plusSeconds(1), null, null, null, 95),
+                        new FitRecord(start.plusSeconds(2), null, null, null, null)));
+
+        assertEquals(List.of(
+                new Application.PowerPoint(0, 80),
+                new Application.PowerPoint(1, 95)),
+                BestPowerNumbers.cadencePoints(activity));
+    }
+
     private static FitActivity powerActivity(Instant start, double power) {
         return new FitActivity(
                 null,

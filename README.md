@@ -28,6 +28,11 @@ shows time in minutes, uses 100 W intervals on the power axis with headroom
 above the maximum power, and draws only the smoothed line.
 The single-activity menu also offers a heart-rate-over-time graph. It uses the
 timestamped heart-rate samples directly, without smoothing.
+The menu also offers a cadence-over-time graph using timestamped cadence
+samples directly, without smoothing, with the axis shown in revolutions per
+minute.
+The single-activity menu also offers a combined graph with power, heart rate,
+and cadence overlaid using separate Y-axis scales and a color legend.
 
 Choose `4 : Parse multiple .fit activity files` to enter a directory containing
 FIT files. The application keeps all parsed activities in memory and prints the
