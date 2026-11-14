@@ -14,16 +14,23 @@ public record FitActivity(
         Instant startTime,
         Instant endTime,
         Integer functionalThresholdPower,
-        List<FitRecord> records) {
+        List<FitRecord> records,
+        List<FitLap> laps) {
 
     private static final double METERS_PER_SECOND_TO_KILOMETERS_PER_HOUR = 3.6;
 
     public FitActivity {
         records = List.copyOf(records);
+        laps = List.copyOf(laps);
     }
 
     public FitActivity(String deviceName, Instant startTime, Instant endTime, List<FitRecord> records) {
-        this(deviceName, startTime, endTime, null, records);
+        this(deviceName, startTime, endTime, null, records, List.of());
+    }
+
+    public FitActivity(String deviceName, Instant startTime, Instant endTime,
+                       Integer functionalThresholdPower, List<FitRecord> records) {
+        this(deviceName, startTime, endTime, functionalThresholdPower, records, List.of());
     }
 
     public Duration duration() {

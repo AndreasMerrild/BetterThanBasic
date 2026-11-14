@@ -33,6 +33,8 @@ samples directly, without smoothing, with the axis shown in revolutions per
 minute.
 The single-activity menu also offers a combined graph with power, heart rate,
 and cadence overlaid using separate Y-axis scales and a color legend.
+When the FIT file contains lap messages, a lap summary table is printed with
+each lap's duration, distance, and average/max power, heart rate, and cadence.
 
 Choose `4 : Parse multiple .fit activity files` to enter a directory containing
 FIT files. The application keeps all parsed activities in memory and prints the

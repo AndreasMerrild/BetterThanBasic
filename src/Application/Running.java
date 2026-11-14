@@ -91,6 +91,7 @@ public class Running {
                         System.out.println("Device: " + activity.deviceName());
                     }
                     System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
+                    printLapSummary(activity);
                     boolean m = true;
                     while(m) {
                         System.out.println("What do you want shown? ");
@@ -228,6 +229,36 @@ public class Running {
                 throw new IllegalArgumentException("Days must not be negative.");
             }
             return days;
+        }
+
+        private void printLapSummary(FitActivity activity) {
+            if (activity.laps().isEmpty()) {
+                System.out.println("No lap summaries recorded in this FIT file.");
+                return;
+            }
+
+            System.out.println("Lap summaries:");
+            System.out.println("Lap | Duration | Distance | Avg speed | Max speed | Avg power | Max power | Avg HR | Max HR | Avg cadence | Max cadence");
+            for (var lap : activity.laps()) {
+                System.out.println(String.join(" | ",
+                        String.format("%3d", lap.number()),
+                        FitFileUsage.formatDuration(lap.duration()),
+                        format(lap.distanceMeters(), " m", "%.0f"),
+                        format(lap.averageSpeedKilometersPerHour(), " km/h", "%.1f"),
+                        format(lap.maxSpeedKilometersPerHour(), " km/h", "%.1f"),
+                        format(lap.averagePower(), " W", "%.0f"),
+                        format(lap.maxPower(), " W", "%.0f"),
+                        format(lap.averageHeartRate(), " bpm", "%.0f"),
+                        format(lap.maxHeartRate(), " bpm", "%.0f"),
+                        format(lap.averageCadence(), " rpm", "%.0f"),
+                        format(lap.maxCadence(), " rpm", "%.0f")));
+            }
+        }
+
+        private String format(Number value, String unit, String pattern) {
+            return value == null
+                    ? "-"
+                    : String.format(java.util.Locale.ROOT, pattern, value.doubleValue()) + unit;
         }
 
 

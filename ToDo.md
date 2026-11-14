@@ -41,7 +41,7 @@
   - Per All sessions
 
 # Cadence based
-- Add a way to show the Cadence Graph over the session.
+- [Done] Add a way to show the Cadence Graph over the session.
 - Add a way to show the avg cadence, max cadence, and min cadence for the entire session.
 - Add a way to show the avg cadence, max cadence, and min cadence for each lap
 

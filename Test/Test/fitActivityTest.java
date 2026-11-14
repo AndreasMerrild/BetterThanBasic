@@ -2,7 +2,9 @@ package Test;
 
 import Application.BestPowerNumbers;
 import Fit.FitActivity;
+import Fit.FitParser;
 import Fit.FitRecord;
+import Fit.FitLap;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -79,6 +81,20 @@ public class fitActivityTest {
                 new Application.PowerPoint(0, 80),
                 new Application.PowerPoint(1, 95)),
                 BestPowerNumbers.cadencePoints(activity));
+    }
+
+    @Test
+    void parserExposesLapSummaries() throws Exception {
+        FitActivity activity = new FitParser().parse(
+                java.nio.file.Path.of("Test", "Test", "2026-01-20-125514-ELEMNT ROAM EFB1-17-0.fit"));
+
+        assertEquals(1, activity.laps().getFirst().number());
+        assertEquals(1, activity.laps().size());
+        FitLap lap = activity.laps().getFirst();
+        assertEquals(4204, lap.duration().toSeconds());
+        org.junit.jupiter.api.Assertions.assertTrue(lap.distanceMeters() > 0);
+        assertEquals(152, lap.averageHeartRate());
+        assertEquals(188, lap.maxHeartRate());
     }
 
     private static FitActivity powerActivity(Instant start, double power) {
