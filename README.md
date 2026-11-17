@@ -45,3 +45,7 @@ Best-power graphs, tables, and the best-20-minute FTP calculation can be
 limited to activities from the last N days. Enter `7`, `90`, or another
 non-negative number when prompted; enter `0` to use all activities (the
 default all-time behavior).
+
+The multi-activity menu also offers Critical Power from the best three-minute
+and twenty-minute efforts. It uses the two-parameter model implemented by
+`CP.cp`; enter the same day window to calculate it, or `0` for all activities.

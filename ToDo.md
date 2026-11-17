@@ -22,6 +22,16 @@
   - [Done] Last 90 days
   - [Done] Last 30 days
   - [Done] Last 7 days
+- [Done] Add a way of determining the Critical Power from the best power for each duration of time. 
+  - [Done] Last 90 days
+  - [Done] Last 30 days
+  - [Done] Last 7 days
+- Add a way of determining the PMax for the Critical Power
+- Add a way to establish the w´ (watt prime) value for the Critical Power
+- Add a way to establish the w´ balance for the Critical Power
+- Add a way to establish the w´ balance for the Critical Power over time.
+- Add a way to establish the w´ balance for the Critical Power over time with a graph.
+
 
 # Training compound
 - For a longer period of time, add a way to show the CTL, ATL, and TSB.

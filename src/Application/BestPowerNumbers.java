@@ -1,5 +1,6 @@
 package Application;
 
+import CP.cp;
 import Fit.FitActivity;
 import Fit.FitRecord;
 
@@ -29,19 +30,29 @@ public final class BestPowerNumbers {
         return bestTwentyHist(activities, Integer.valueOf(days));
     }
 
+    public static double criticalPowerHist(List<FitActivity> activities, int days) {
+        double threeMinute = bestPowerHist(activities, 3 * 60, Integer.valueOf(days));
+        double twentyMinute = bestPowerHist(activities, 20 * 60, Integer.valueOf(days));
+        if (threeMinute <= 0 || twentyMinute <= 0) {
+            return 0.0;
+        }
+        return new cp().calcCP(twentyMinute, threeMinute, 0);
+    }
+
     private static double bestTwentyHist(List<FitActivity> activities, Integer days) {
-        List<FitActivity> selected = selectActivities(activities, days);
-        double ftp = 0.0;
-        for (FitActivity act : selected) {
-            if(act.duration().toSeconds()<20*60){
-                continue;
-            }
-            double bestTwenty = bestTwenty(act);
-            if (bestTwenty > ftp) {
-                 ftp = bestTwenty*0.95;
+        return bestPowerHist(activities, 20 * 60, days) * 0.95;
+    }
+
+    private static double bestPowerHist(
+            List<FitActivity> activities, int intervalSeconds, Integer days) {
+        double best = 0.0;
+        for (FitActivity activity : selectActivities(activities, days)) {
+            Double power = bestPowerWatts(activity, intervalSeconds);
+            if (power != null) {
+                best = Math.max(best, power);
             }
         }
-        return ftp;
+        return best;
     }
 
     public static double bestTwenty (FitActivity activity) {

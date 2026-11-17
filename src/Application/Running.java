@@ -40,22 +40,10 @@ public class Running {
         public boolean goInto(Scanner scanner, boolean active){
             int firstInput = scanner.nextInt();
             if(firstInput==1) {
-                System.out.println("Let's start with the athlete name");
-                String name = scanner.next();
-                System.out.println("Please specify the weight of the athlete in question. ");
-                double weight = scanner.nextDouble();
-                System.out.println("The power from the 20 min test.");
-                double power = scanner.nextDouble();
-                ftp myFtp = new ftp(name, weight);
-                myFtp.ftpCalc(power);
+                calculateFtp(scanner, true);
             }
             else if(firstInput==2){
-                System.out.println("Let's start with the athlete name");
-                String name = scanner.next();
-                System.out.println("The power from the 20 min test.");
-                double power = scanner.nextDouble();
-                ftp myFtp = new ftp(name, null);
-                myFtp.ftpCalc(power);
+                calculateFtp(scanner, false);
             }
             else if(firstInput==3){
                 System.out.println("Please select a FIT activity file to parse.");
@@ -177,6 +165,7 @@ public class Running {
                     System.out.println("2: Show the best Power/kg graph");
                     System.out.println("3: Show the best power table");
                     System.out.println("4: Calculate FTP from the best 20 min");
+                    System.out.println("5 : Calculate CP from the best 3 and 20 min");
                     String choice = scanner.next();
                     if (choice.equals("0")) {
                         System.out.println("Returning to the start screen");
@@ -205,6 +194,17 @@ public class Running {
                                 usage.activities(), readBestPowerDays(scanner));
                         System.out.println("The FTP is: " + ftp);
                     }
+                    else if (choice.equals("5")) {
+                        System.out.println("Calculating CP from the best 3 and 20 min");
+                        double criticalPower = BestPowerNumbers.criticalPowerHist(
+                                usage.activities(), readBestPowerDays(scanner));
+                        if (criticalPower <= 0) {
+                            System.out.println("Critical Power is unavailable: both a 3-minute and "
+                                    + "20-minute power effort are required.");
+                        } else {
+                            System.out.println("The Critical Power is: " + criticalPower + " W");
+                        }
+                    }
                     else {
                         System.out.println("This is not applicable at the moment please try one of the other options. ");
                     }
@@ -220,6 +220,19 @@ public class Running {
 
             }
             return active;
+        }
+
+        private void calculateFtp(Scanner scanner, boolean withWeight) {
+            System.out.println("Let's start with the athlete name");
+            String name = scanner.next();
+            Double weight = null;
+            if (withWeight) {
+                System.out.println("Please specify the weight of the athlete in question. ");
+                weight = scanner.nextDouble();
+            }
+            System.out.println("The power from the 20 min test.");
+            double power = scanner.nextDouble();
+            new ftp(name, weight).ftpCalc(power);
         }
 
         private int readBestPowerDays(Scanner scanner) {
