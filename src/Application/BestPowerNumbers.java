@@ -39,6 +39,20 @@ public final class BestPowerNumbers {
         return new cp().calcCP(twentyMinute, threeMinute, 0);
     }
 
+    public static double pMaxHist(List<FitActivity> activities, int days) {
+        double oneSecond = bestPowerHist(activities, 1, Integer.valueOf(days));
+        return oneSecond <= 0 ? 0.0 : new cp().calcPMax(oneSecond);
+    }
+
+    public static double wPrimeHist(List<FitActivity> activities, int days) {
+        double criticalPower = criticalPowerHist(activities, days);
+        double threeMinute = bestPowerHist(activities, 3 * 60, Integer.valueOf(days));
+        if (criticalPower <= 0 || threeMinute <= criticalPower) {
+            return 0.0;
+        }
+        return new cp().calcWPrime(criticalPower, threeMinute, 3 * 60);
+    }
+
     private static double bestTwentyHist(List<FitActivity> activities, Integer days) {
         return bestPowerHist(activities, 20 * 60, days) * 0.95;
     }

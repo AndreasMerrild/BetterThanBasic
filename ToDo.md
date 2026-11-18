@@ -17,7 +17,6 @@
 - [Done] Add a way to show IF
 - [Done] Add a way to show the NP
 - [Done] Add a way to show the VI
-- Add a table of data on each lap in the fit file. (Averages and Max)
 - [Done] Add a way to show the best power for each duration of time. 
   - [Done] Last 90 days
   - [Done] Last 30 days
@@ -26,11 +25,12 @@
   - [Done] Last 90 days
   - [Done] Last 30 days
   - [Done] Last 7 days
-- Add a way of determining the PMax for the Critical Power
-- Add a way to establish the w´ (watt prime) value for the Critical Power
+- [Done] Add a way of determining the PMax for the Critical Power
+- [Done] Add a way to establish the w´ (watt prime) value for the Critical Power
 - Add a way to establish the w´ balance for the Critical Power
 - Add a way to establish the w´ balance for the Critical Power over time.
 - Add a way to establish the w´ balance for the Critical Power over time with a graph.
+- Add a table of data on each lap in the fit file. (Averages and Max)
 
 
 # Training compound

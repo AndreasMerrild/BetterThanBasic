@@ -17,4 +17,17 @@ public class cpTest {
         assertThrows(IllegalArgumentException.class, () -> new cp().calcCP(0.0, 450.0, 0));
         assertThrows(IllegalArgumentException.class, () -> new cp().calcCP(280.0, 200.0, 0));
     }
+
+    @Test
+    void establishesPMaxFromOneSecondPower() {
+        assertEquals(900.0, new cp().calcPMax(900.0), 0.000001);
+        assertThrows(IllegalArgumentException.class, () -> new cp().calcPMax(0.0));
+    }
+
+    @Test
+    void calculatesWPrimeFromAnEffortAboveCriticalPower() {
+        assertEquals(36000.0, new cp().calcWPrime(250.0, 450.0, 180.0), 0.000001);
+        assertThrows(IllegalArgumentException.class,
+                () -> new cp().calcWPrime(250.0, 200.0, 180.0));
+    }
 }

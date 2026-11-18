@@ -196,13 +196,27 @@ public class Running {
                     }
                     else if (choice.equals("5")) {
                         System.out.println("Calculating CP from the best 3 and 20 min");
+                        int days = readBestPowerDays(scanner);
                         double criticalPower = BestPowerNumbers.criticalPowerHist(
-                                usage.activities(), readBestPowerDays(scanner));
+                                usage.activities(), days);
                         if (criticalPower <= 0) {
                             System.out.println("Critical Power is unavailable: both a 3-minute and "
                                     + "20-minute power effort are required.");
                         } else {
                             System.out.println("The Critical Power is: " + criticalPower + " W");
+                        }
+                        double pMax = BestPowerNumbers.pMaxHist(usage.activities(), days);
+                        if (pMax <= 0) {
+                            System.out.println("PMax is unavailable: a 1-second power effort is required.");
+                        } else {
+                            System.out.println("PMax is: " + pMax + " W");
+                        }
+                        double wPrime = BestPowerNumbers.wPrimeHist(usage.activities(), days);
+                        if (wPrime <= 0) {
+                            System.out.println("W' is unavailable: both a 3-minute power effort "
+                                    + "and Critical Power are required.");
+                        } else {
+                            System.out.printf("W' is: %.0f J%n", wPrime);
                         }
                     }
                     else {

@@ -6,6 +6,42 @@ public class cp {
     }
 
     /**
+     * Establishes PMax from the best one-second maximal power.
+     *
+     * @param oneSecondPower best average power over one second, in watts
+     * @return PMax in watts
+     */
+    public double calcPMax(double oneSecondPower) {
+        if (!Double.isFinite(oneSecondPower) || oneSecondPower <= 0) {
+            throw new IllegalArgumentException(
+                    "One-second power must be a finite, positive value.");
+        }
+        return oneSecondPower;
+    }
+
+    /**
+     * Calculates W' from an average power sustained for a known duration.
+     *
+     * @param criticalPower critical power in watts
+     * @param durationPower average power over the duration, in watts
+     * @param durationSeconds duration of the effort, in seconds
+     * @return W' in joules
+     */
+    public double calcWPrime(double criticalPower, double durationPower,
+                             double durationSeconds) {
+        if (!Double.isFinite(criticalPower) || !Double.isFinite(durationPower)
+                || !Double.isFinite(durationSeconds)
+                || criticalPower <= 0 || durationPower <= criticalPower
+                || durationSeconds <= 0) {
+            throw new IllegalArgumentException(
+                    "Critical power and duration power must be finite, positive values, "
+                            + "duration power must exceed critical power, "
+                            + "and duration must be positive.");
+        }
+        return (durationPower - criticalPower) * durationSeconds;
+    }
+
+    /**
      * Calculates critical power from the best three-minute and twenty-minute
      * powers using the two-parameter work-capacity model.
      *
