@@ -42,13 +42,13 @@
 
 # Heart Rate based
 - [Done] Add a way to show the HR Graph over time.
-- Add a way to show the HR Graph over time with the power data.
-- Add a way to show the HR Graph over time with the power data and the cadence data
-- Add a way to show the Avg HR, Max HR, and Min HR for the entire fit file.
-- Add a way to show the Avg HR, Max HR, and Min HR for each lap
-- Add a way to show the highest HR for each duration of time. 
-  - Per session
-  - Per All sessions
+- [Done] Add a way to show the HR Graph over time with the power data.
+- [Done] Add a way to show the HR Graph over time with the power data and the cadence data
+- [Done] Add a way to show the Avg HR, Max HR, and Min HR for the entire fit file.
+- [Done] Add a way to show the Avg HR, Max HR, and Min HR for each lap
+- [Done] Add a way to show the highest HR for each duration of time. 
+  - [Done] Per session
+  - [Done] Per All sessions
 
 # Cadence based
 - [Done] Add a way to show the Cadence Graph over the session.

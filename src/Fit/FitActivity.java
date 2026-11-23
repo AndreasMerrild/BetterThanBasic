@@ -149,6 +149,28 @@ public record FitActivity(
         return average(records.stream().map(FitRecord::heartRate).toList());
     }
 
+    public Integer maxHeartRate() {
+        return records.stream().map(FitRecord::heartRate).filter(hr -> hr != null)
+                .max(Integer::compare).orElse(null);
+    }
+
+    public Integer minHeartRate() {
+        return records.stream().map(FitRecord::heartRate).filter(hr -> hr != null)
+                .min(Integer::compare).orElse(null);
+    }
+
+    /** Lowest recorded heart rate inside the lap's time window (FIT laps don't store a min HR). */
+    public Integer minHeartRate(FitLap lap) {
+        if (lap.startTime() == null) {
+            return null;
+        }
+        Instant end = lap.startTime().plus(lap.duration());
+        return records.stream()
+                .filter(r -> r.timestamp() != null && r.heartRate() != null
+                        && !r.timestamp().isBefore(lap.startTime()) && r.timestamp().isBefore(end))
+                .map(FitRecord::heartRate).min(Integer::compare).orElse(null);
+    }
+
     private static Double average(List<? extends Number> values) {
         return values.stream()
                 .filter(value -> value != null)

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 public final class BestPowerNumbers {
     private static final int[] BEST_POWER_INTERVALS_SECONDS = {
@@ -185,15 +186,30 @@ public final class BestPowerNumbers {
         return raw;
     }
 
+    /** Highest average heart rate for each standard duration, across all given activities. */
+    public static List<PowerPoint> bestHeartRatePoints(List<FitActivity> activities) {
+        return combineBestPoints(selectActivities(activities, null), 0, BestPowerNumbers::heartRatePoints);
+    }
+
+    public static List<PowerPoint> bestHeartRatePoints(FitActivity activity) {
+        return bestHeartRatePoints(Collections.singletonList(activity));
+    }
+
     private static List<PowerPoint> combineBestPowerPoints(List<FitActivity> activities, int weight) {
+        return combineBestPoints(activities, weight, BestPowerNumbers::rawPowerPoints);
+    }
+
+    private static List<PowerPoint> combineBestPoints(List<FitActivity> activities, int weight,
+                                                      Function<FitActivity, List<PowerPoint>> samples) {
         if (activities == null || activities.isEmpty()) {
             return List.of();
         }
+        List<List<PowerPoint>> raw = activities.stream().map(samples).toList();
         List<PowerPoint> result = new ArrayList<>();
         for (int interval : BEST_POWER_INTERVALS_SECONDS) {
             double best = Double.NEGATIVE_INFINITY;
-            for (FitActivity activity : activities) {
-                Double power = bestPowerWatts(activity, interval);
+            for (List<PowerPoint> activityRaw : raw) {
+                Double power = bestPowerWatts(activityRaw, interval);
                 if (power != null) {
                     best = Math.max(best, weight > 0 ? power / weight : power);
                 }

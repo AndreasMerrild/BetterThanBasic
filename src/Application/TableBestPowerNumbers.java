@@ -120,7 +120,7 @@ public final class TableBestPowerNumbers extends JPanel {
             return false;
         }
 
-        private static String formatDuration(int seconds) {
+        static String formatDuration(int seconds) {
             if (seconds < 60) {
                 return seconds + "s";
             }

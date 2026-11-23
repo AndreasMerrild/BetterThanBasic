@@ -62,6 +62,8 @@ public class Running {
                     FitFileUsage.printAverage("Average speed", activity.averageSpeed(), " km/h");
                     FitFileUsage.printAverage("Average cadence", activity.averageCadence(), " rpm");
                     FitFileUsage.printAverage("Average heart rate", activity.averageHeartRate(), " bpm");
+                    System.out.println("Max heart rate: " + format(activity.maxHeartRate(), " bpm", "%.0f"));
+                    System.out.println("Min heart rate: " + format(activity.minHeartRate(), " bpm", "%.0f"));
 
                     if (activity.functionalThresholdPower() != null) {
                         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
@@ -92,6 +94,7 @@ public class Running {
                         System.out.println("6: Show the best Power/kg graph");
                         System.out.println("7: Show the best power table");
                         System.out.println("8: Show the best Power/kg table");
+                        System.out.println("9: Show the best heart rate for each duration");
                         String choice = scanner.next();
                         if (choice.equals("0")) {
                             System.out.println("Returning to the start screen");
@@ -130,6 +133,9 @@ public class Running {
                             System.out.println("Showing a table with best power per weight data");
                             TableBestPowerNumbers.showBestPowerTable(activity, w);
                         }
+                        else if (choice.equals("9")) {
+                            printBestHeartRate(BestPowerNumbers.bestHeartRatePoints(activity));
+                        }
                         else {
                             System.out.println("This is not applicable at the moment please try one of the other options. ");
                         }
@@ -166,6 +172,7 @@ public class Running {
                     System.out.println("3: Show the best power table");
                     System.out.println("4: Calculate FTP from the best 20 min");
                     System.out.println("5 : Calculate CP from the best 3 and 20 min");
+                    System.out.println("6: Show the best heart rate for each duration");
                     String choice = scanner.next();
                     if (choice.equals("0")) {
                         System.out.println("Returning to the start screen");
@@ -219,6 +226,9 @@ public class Running {
                             System.out.printf("W' is: %.0f J%n", wPrime);
                         }
                     }
+                    else if (choice.equals("6")) {
+                        printBestHeartRate(BestPowerNumbers.bestHeartRatePoints(usage.activities()));
+                    }
                     else {
                         System.out.println("This is not applicable at the moment please try one of the other options. ");
                     }
@@ -265,7 +275,7 @@ public class Running {
             }
 
             System.out.println("Lap summaries:");
-            System.out.println("Lap | Duration | Distance | Avg speed | Max speed | Avg power | Max power | Avg HR | Max HR | Avg cadence | Max cadence");
+            System.out.println("Lap | Duration | Distance | Avg speed | Max speed | Avg power | Max power | Avg HR | Max HR | Min HR | Avg cadence | Max cadence");
             for (var lap : activity.laps()) {
                 System.out.println(String.join(" | ",
                         String.format("%3d", lap.number()),
@@ -277,8 +287,22 @@ public class Running {
                         format(lap.maxPower(), " W", "%.0f"),
                         format(lap.averageHeartRate(), " bpm", "%.0f"),
                         format(lap.maxHeartRate(), " bpm", "%.0f"),
+                        format(activity.minHeartRate(lap), " bpm", "%.0f"),
                         format(lap.averageCadence(), " rpm", "%.0f"),
                         format(lap.maxCadence(), " rpm", "%.0f")));
+            }
+        }
+
+        private void printBestHeartRate(java.util.List<PowerPoint> points) {
+            if (points.isEmpty()) {
+                System.out.println("No heart rate data available.");
+                return;
+            }
+            System.out.println("Duration | Best avg HR");
+            for (PowerPoint point : points) {
+                System.out.printf("%8s | %.0f bpm%n",
+                        TableBestPowerNumbers.BestPowerTableModel.formatDuration((int) point.seconds()),
+                        point.power());
             }
         }
 
