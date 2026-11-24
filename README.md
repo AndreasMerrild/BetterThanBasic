@@ -63,9 +63,24 @@ stacked on one time axis with dashed lap markers. Hover a graph to read every
 value at that moment. Previous/Next (or ← →) step through trainings, and "Back to
 calendar" returns to that week.
 
-Frontend files: `index.html` + `app.js` (calendar), `ride.html` + `ride.js` +
-`ride.css` (training page), `charts.js` (the graphs), `common.js` (date/number
-helpers used by both pages) and `styles.css` (shared look).
+The **Dashboard** tab shows your best average power for every duration (1 s to 3 h)
+as a power curve and a table, for the last 7, 42, 90 or 365 days, all time, or custom
+dates. For any period other than all time, your best ever is drawn alongside (grey,
+dashed) and the table shows each number as a percentage of it, marking new records with
+★. Each best links to the ride it came from. Tiles above sum up the period (rides, time,
+distance, TSS) and estimate FTP as 95% of the best 20 minutes. The chosen period is kept
+in the address (`dashboard.html#days=42`, `#from=2025-01-01&to=2025-03-31`).
+
+Each ride's summary, including its best-power curve, is worked out once and saved in the
+database (table `summaries`), so the server only keeps these small summaries in memory and
+reads a ride's full data only when its page is opened. With about 1,000 rides the training
+list loads in well under a second; the first start after this change works out every
+summary once (about a minute for 1,000 rides, a few seconds for 100).
+
+Frontend files: `index.html` + `app.js` (calendar), `dashboard.html` + `dashboard.js` +
+`dashboard.css` (dashboard), `ride.html` + `ride.js` + `ride.css` (training page),
+`charts.js` (the ride graphs), `common.js` (helpers, athlete menu and upload, used by
+every page) and `styles.css` (shared look).
 
 Start it with `powershell -ExecutionPolicy Bypass -File .
 un-server.ps1` (compiles and

@@ -46,6 +46,10 @@ public final class FitDatabase {
                     + " distance REAL, avg_speed REAL, max_speed REAL, avg_power INTEGER, max_power INTEGER,"
                     + " avg_hr INTEGER, max_hr INTEGER, avg_cadence INTEGER, max_cadence INTEGER)");
             statement.executeUpdate("CREATE INDEX IF NOT EXISTS records_activity ON records(activity_id)");
+            // Pre-computed summaries (e.g. the web app's per-ride numbers), so a training list does not
+            // need every recorded second in memory. "version" lets the owner recompute after changes.
+            statement.executeUpdate("CREATE TABLE IF NOT EXISTS summaries ("
+                    + "activity_id INTEGER PRIMARY KEY, version INTEGER, json TEXT)");
         } catch (SQLException exception) {
             throw new IOException("Could not open training database: " + exception.getMessage(), exception);
         }
@@ -157,7 +161,75 @@ public final class FitDatabase {
         return added;
     }
 
-    /** Every stored activity, oldest first. */
+    /** The database id of the activity imported from the file with this name, or null. */
+    public Long idOf(String fileName) throws IOException {
+        try (Connection connection = connect()) {
+            return findId(connection, fileName);
+        } catch (SQLException exception) {
+            throw new IOException("Database error for " + fileName + ": " + exception.getMessage(), exception);
+        }
+    }
+
+    /** A stored activity's database id and start time, without its data. */
+    public record StoredActivity(long id, Instant startTime) {
+    }
+
+    /** Every stored activity's id and start time, oldest first. Cheap: no records are read. */
+    public List<StoredActivity> list() throws IOException {
+        try (Connection connection = connect(); Statement statement = connection.createStatement();
+             ResultSet result = statement.executeQuery("SELECT id, start_time FROM activities ORDER BY start_time")) {
+            List<StoredActivity> list = new ArrayList<>();
+            while (result.next()) {
+                list.add(new StoredActivity(result.getLong(1), instant(result, 2)));
+            }
+            return list;
+        } catch (SQLException exception) {
+            throw new IOException("Could not read training database: " + exception.getMessage(), exception);
+        }
+    }
+
+    /** One stored activity with all its records and laps, or null if there is none with this id. */
+    public FitActivity load(long id) throws IOException {
+        try (Connection connection = connect()) {
+            List<FitActivity> found = load(connection, id);
+            return found.isEmpty() ? null : found.get(0);
+        } catch (SQLException exception) {
+            throw new IOException("Could not read training database: " + exception.getMessage(), exception);
+        }
+    }
+
+    /** All stored summaries that were saved with {@code version}, keyed by activity id. */
+    public Map<Long, String> summaries(int version) throws IOException {
+        try (Connection connection = connect();
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT activity_id, json FROM summaries WHERE version = ?")) {
+            statement.setInt(1, version);
+            Map<Long, String> summaries = new HashMap<>();
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    summaries.put(result.getLong(1), result.getString(2));
+                }
+            }
+            return summaries;
+        } catch (SQLException exception) {
+            throw new IOException("Could not read training database: " + exception.getMessage(), exception);
+        }
+    }
+
+    public void storeSummary(long id, int version, String json) throws IOException {
+        try (Connection connection = connect();
+             PreparedStatement statement = connection.prepareStatement(
+                     "INSERT OR REPLACE INTO summaries (activity_id, version, json) VALUES (?,?,?)")) {
+            statement.setLong(1, id);
+            statement.setInt(2, version);
+            statement.setString(3, json);
+            statement.executeUpdate();
+        } catch (SQLException exception) {
+            throw new IOException("Could not write training database: " + exception.getMessage(), exception);
+        }
+    }
+
+    /** Every stored activity, oldest first. Reads every record into memory, so prefer {@link #list()} for many rides. */
     public List<FitActivity> loadAll() throws IOException {
         try (Connection connection = connect()) {
             return load(connection, null);

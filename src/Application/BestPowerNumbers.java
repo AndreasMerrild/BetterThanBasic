@@ -10,7 +10,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 public final class BestPowerNumbers {
@@ -161,6 +163,27 @@ public final class BestPowerNumbers {
             List<FitActivity> activities, int weight, int days) {
         validateWeight(weight);
         return bestPowerPoints(activities, Integer.valueOf(days), weight);
+    }
+
+    /** The standard durations (seconds) that best-power numbers are calculated for. */
+    public static int[] intervalsSeconds() {
+        return BEST_POWER_INTERVALS_SECONDS.clone();
+    }
+
+    /**
+     * Best average power (W) of one activity for every standard duration it is long enough for,
+     * keyed by duration in seconds. Empty when the activity has no power data.
+     */
+    public static Map<Integer, Double> bestPowerCurve(FitActivity activity) {
+        Map<Integer, Double> curve = new LinkedHashMap<>();
+        List<PowerPoint> raw = rawPowerPoints(activity); // built once, reused for every duration
+        for (int interval : BEST_POWER_INTERVALS_SECONDS) {
+            Double power = bestPowerWatts(raw, interval);
+            if (power != null) {
+                curve.put(interval, power);
+            }
+        }
+        return curve;
     }
 
     public static Double bestPowerWatts(FitActivity activity, int intervalSeconds) {
