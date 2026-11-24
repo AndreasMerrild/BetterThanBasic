@@ -49,3 +49,22 @@ default all-time behavior).
 The multi-activity menu also offers Critical Power from the best three-minute
 and twenty-minute efforts. It uses the two-parameter model implemented by
 `CP.cp`; enter the same day window to calculate it, or `0` for all activities.
+
+## Web frontend (calendar)
+
+The `frontend/` directory holds a dependency-free web frontend (plain HTML, CSS
+and JavaScript) styled after the old Today's Plan calendar. Each week row shows
+the stored trainings on their dates with distance, time, average speed, average
+power and average heart rate, plus a weekly summary (count, TSS, time, distance).
+Click a training to see more details (NP, IF, TSS, cadence, laps).
+
+Start it with the `BetterThanBasic Web` run configuration, or run the main class
+`Server.WebServer` from the project root (so `frontend/` and `training.db` are
+found), then open <http://localhost:8080>.
+
+Arguments: `[port] [fit-directory]`. When a directory is given, new FIT files in
+it are imported into `training.db` before the server starts. The ↻ button in the
+top bar re-reads the database, e.g. after importing files through the console app.
+
+The server uses only the JDK's built-in `com.sun.net.httpserver` and listens on
+localhost only. API: `GET /api/activities` returns per-training summaries as JSON.
