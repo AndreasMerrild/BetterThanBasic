@@ -2,13 +2,24 @@ package Application;
 
 import Ftp.ftp;
 import Fit.FitActivity;
-import Fit.FitParser;
+import Fit.FitDatabase;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Running {
+        private FitDatabase database;
+
+        /** Opens the training database the first time it is needed. */
+        private FitDatabase database() throws IOException {
+            if (database == null) {
+                database = new FitDatabase();
+            }
+            return database;
+        }
+
         public void run() {
             Scanner scanner = new Scanner(System.in);
             boolean active = true;
@@ -18,7 +29,12 @@ public class Running {
                 if(first) {
                     first = false;
                 }
-                active = goInto(scanner, active);
+                try {
+                    active = goInto(scanner, active);
+                } catch (InputMismatchException exception) {
+                    scanner.nextLine();
+                    System.out.println("Please type a number.");
+                }
             }
         }
         public void printOptions(boolean first){
@@ -33,7 +49,7 @@ public class Running {
             System.out.println("1 : FTP zone calculation w weight");
             System.out.println("2 : FTP zone calculation w/o weight");
             System.out.println("3 : Parse a .fit activity file");
-            System.out.println("4 : Parse multiple .fit activity files");
+            System.out.println("4 : Import a folder of .fit files and analyse all stored training data");
 
             System.out.println("0 : Exit program");
         }
@@ -54,7 +70,7 @@ public class Running {
                 }
                 System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
                 try {
-                    FitActivity activity = new FitParser().parse(file);
+                    FitActivity activity = database().importFile(file);
                     System.out.println("Start: " + activity.startTime());
                     System.out.println("End: " + activity.endTime());
                     System.out.println("Duration: " + FitFileUsage.formatDuration(activity.duration()));
@@ -148,16 +164,14 @@ public class Running {
                 }
             }
             else if(firstInput==4){
-                System.out.println("Enter the directory containing the FIT files:");
+                System.out.println("Enter a directory with new FIT files to import "
+                        + "(leave empty to use the stored training data):");
                 scanner.nextLine();
-                String directoryText = scanner.nextLine().trim();
-                if (directoryText.isEmpty()) {
-                    System.out.println("No directory specified.");
-                    return active;
-                }
+                // Strip the quotes Windows "Copy as path" adds.
+                String directoryText = scanner.nextLine().trim().replace("\"", "");
                 MultiFileUsage usage = new MultiFileUsage();
                 try {
-                    usage.loadFiles(Path.of(directoryText));
+                    usage.loadFiles(database(), directoryText.isEmpty() ? null : Path.of(directoryText));
                     usage.printSummary();
                 } catch (IOException | RuntimeException exception) {
                     System.out.println("Could not load FIT files: " + exception.getMessage());

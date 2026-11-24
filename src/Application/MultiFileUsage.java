@@ -1,15 +1,13 @@
 package Application;
 
 import Fit.FitActivity;
-import Fit.FitParser;
+import Fit.FitDatabase;
 import Fit.FitRecord;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -23,35 +21,17 @@ public class MultiFileUsage {
     private final List<FitActivity> activities = new ArrayList<>();
 
     /**
-     * Loads every FIT file directly inside {@code directory}.
+     * Imports any new FIT files in {@code directory} into the database (when a
+     * directory is given) and then loads every stored activity from it.
      *
-     * @return the parsed activities, in filename order
-     * @throws IOException if the directory cannot be read or a file cannot be parsed
+     * @return all stored activities, oldest first
      */
-    public List<FitActivity> loadFiles(Path directory) throws IOException {
-        if (directory == null || !Files.isDirectory(directory)) {
-            throw new IOException("FIT file directory does not exist: " + directory);
+    public List<FitActivity> loadFiles(FitDatabase database, Path directory) throws IOException {
+        if (directory != null) {
+            System.out.println("Imported " + database.importDirectory(directory) + " new FIT file(s).");
         }
-
-        FitParser parser = new FitParser();
-        List<Path> files;
-        try (var paths = Files.list(directory)) {
-            files = paths
-                    .filter(Files::isRegularFile)
-                    .filter(path -> path.getFileName().toString()
-                            .toLowerCase(Locale.ROOT).endsWith(".fit"))
-                    .sorted(Comparator.comparing(path -> path.getFileName().toString(),
-                            String.CASE_INSENSITIVE_ORDER))
-                    .toList();
-        }
-
-        List<FitActivity> loaded = new ArrayList<>();
-        for (Path file : files) {
-            loaded.add(parser.parse(file));
-        }
-
         activities.clear();
-        activities.addAll(loaded);
+        activities.addAll(database.loadAll());
         return List.copyOf(activities);
     }
 

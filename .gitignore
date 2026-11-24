@@ -31,3 +31,6 @@ bin/
 
 # Local FIT test recordings
 Test/Test/*.fit
+
+# Local training database
+training.db

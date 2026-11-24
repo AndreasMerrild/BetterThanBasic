@@ -56,6 +56,7 @@
 - Add a way to show the avg cadence, max cadence, and min cadence for each lap
 
 # File loading 
+- [Done] Change the way the program loads fit files to actually load the fit files into a database and then extract the data from the database instead of loading the fit files every time.
 - Add a way to save the data to a file.
 - Add a way to load the data from a file.
 - Add a way to edit the data after it has been saved.
