@@ -75,6 +75,21 @@ Arguments: `[port] [fit-directory]`. When a directory is given, new FIT files in
 it are imported into `training.db` before the server starts. The ↻ button in the
 top bar re-reads the database, e.g. after importing files through the console app.
 
+To add trainings from the browser, open the **Athlete** menu (top right) and choose
+**Upload FIT files…** (select as many as you like) or **Upload a folder…** (every `.fit`
+file in the folder and its subfolders). Files are sent one at a time with automatic
+retries, the page warns before you leave it mid-upload, and a report at the end lists
+how many were added, already stored (skipped, by file name) or failed, and why.
+
+The same menu switches between athletes, adds a new one and renames the current one.
+Every athlete has their own trainings: the first athlete uses `training.db` and
+`uploads/` (the same data the console app uses); athletes added later get
+`athletes/<id>/training.db` and `athletes/<id>/uploads/`. The list of athletes is
+kept in `athletes.txt`. All of these are personal data and ignored by git.
+
 The server uses only the JDK's built-in `com.sun.net.httpserver` and listens on
-localhost only. API: `GET /api/activities` returns per-training summaries as JSON;
-`GET /api/activities/{id}/records` returns one training's samples for the graphs.
+localhost only. API: `GET /api/athletes` lists athletes; every training request takes `?athlete=<id>`
+(default: the first athlete). `GET /api/activities` returns per-training summaries as JSON;
+`GET /api/activities/{id}/records` returns one training's samples for the graphs
+(the id is the training's start time in epoch milliseconds); `POST /api/upload?name=<file>.fit`
+with the raw file as the body and the header `X-BetterThanBasic-Upload: 1` imports a FIT file.

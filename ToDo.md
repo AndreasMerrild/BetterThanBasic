@@ -66,9 +66,9 @@
 
 
 # Graphical Interface
-- Add a graphical user interface to the program.
-- Add a calender function that shows the preavious training sessions. 
-- Add a way to click into a training session and view the data from that session.
+- [Done] Add a graphical user interface to the program.
+- [Done] Add a calender function that shows the preavious training sessions. 
+- [Done] Add a way to click into a training session and view the data from that session.
 - Add a way of choosing parts of the training session to view the data from that part of the session.
 - Add a way to get an overview of all the training sessions and the data from them. (CTL, ATL, TSB). 
 - Add a way to quickly get a Critical Power Curve from the latest 90 days of training sessions.

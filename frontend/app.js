@@ -31,7 +31,8 @@ async function loadActivities(reload = false) {
     el("reload").classList.add("spinning");
     try {
         setActivities(await fetchActivities(reload));
-        el("status").textContent = `${state.activities.length} trainings stored`;
+        const count = state.activities.length;
+        el("status").textContent = `${count} training${count === 1 ? "" : "s"} stored`;
     } catch (error) {
         el("status").textContent = `Could not load trainings: ${error.message}`;
     } finally {
@@ -187,6 +188,14 @@ function onScroll() {
     history.replaceState(null, "", `#${dayKey(addDays(top, 7))}`); // goTo() shows this week second
 }
 
+/** Re-reads the trainings from the server and redraws, staying on the same weeks. */
+async function refresh() {
+    const top = topWeek();
+    await loadActivities(true);
+    renderRange(state.first, state.last);
+    scrollToWeek(top);
+}
+
 function wireEvents() {
     el("prev").addEventListener("click", () => shift(-1));
     el("next").addEventListener("click", () => shift(1));
@@ -198,12 +207,8 @@ function wireEvents() {
     el("jump-date").addEventListener("change", (event) => {
         if (event.target.value) goTo(parseKey(event.target.value));
     });
-    el("reload").addEventListener("click", async () => {
-        const top = topWeek();
-        await loadActivities(true);
-        renderRange(state.first, state.last);
-        scrollToWeek(top);
-    });
+    el("reload").addEventListener("click", refresh);
+    setupAthleteMenu(refresh);
     el("calendar").addEventListener("scroll", onScroll, { passive: true });
     document.addEventListener("keydown", (event) => {
         if (event.target.tagName === "INPUT") return;

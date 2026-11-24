@@ -65,6 +65,15 @@ public final class FitDatabase {
         }
     }
 
+    /** Whether a FIT file with this file name has already been imported. */
+    public boolean contains(String fileName) throws IOException {
+        try (Connection connection = connect()) {
+            return findId(connection, fileName) != null;
+        } catch (SQLException exception) {
+            throw new IOException("Database error for " + fileName + ": " + exception.getMessage(), exception);
+        }
+    }
+
     /** Imports every new FIT file directly inside {@code directory}; returns how many were added. */
     public int importDirectory(Path directory) throws IOException {
         if (directory == null || !Files.isDirectory(directory)) {

@@ -15,9 +15,15 @@
         <a class="nav-item" id="calendar-link" href="index.html">Calendar</a>
     </nav>
     <div class="tools">
-        <div class="user-badge">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 4a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zm0 14a8 8 0 0 1-6.2-2.95C7.2 15.4 9.5 14.5 12 14.5s4.8.9 6.2 2.55A8 8 0 0 1 12 20z"/></svg>
-            Athlete
+        <div class="athlete-menu">
+            <button class="user-badge" id="athlete-button" type="button" aria-haspopup="menu" aria-expanded="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 4a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zm0 14a8 8 0 0 1-6.2-2.95C7.2 15.4 9.5 14.5 12 14.5s4.8.9 6.2 2.55A8 8 0 0 1 12 20z"/></svg>
+                <span id="athlete-name">Athlete</span> <span class="caret" aria-hidden="true">&#9662;</span>
+            </button>
+            <!-- Filled by setupAthleteMenu() in common.js -->
+            <div class="menu" id="athlete-dropdown" role="menu" hidden></div>
+            <input type="file" id="upload-input" accept=".fit,.FIT" multiple hidden>
+            <input type="file" id="upload-folder-input" webkitdirectory multiple hidden>
         </div>
     </div>
 </header>

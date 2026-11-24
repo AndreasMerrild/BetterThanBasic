@@ -40,9 +40,14 @@ async function loadCharts(activity) {
     const container = el("ride-charts");
     container.textContent = "Loading graphs…";
     try {
-        const response = await fetch(`/api/activities/${activity.id}/records`);
+        const response = await fetch(apiUrl(`/api/activities/${activity.id}/records`));
         if (!response.ok) throw new Error(`Server answered ${response.status}`);
-        chartData = await response.json();
+        const data = await response.json();
+        if (!data || !Array.isArray(data.t)) {
+            // A server built before the graphs existed answers with the training list instead.
+            throw new Error("the server sent no samples. Recompile and restart the server (Server.WebServer)");
+        }
+        chartData = data;
         renderRideCharts(container, chartData);
     } catch (error) {
         container.textContent = `Could not load graphs: ${error.message}`;
@@ -71,12 +76,24 @@ async function init() {
     el("ride-sub").textContent = activity.device || "";
     el("back").href = calendarUrl(start);
     el("calendar-link").href = calendarUrl(start);
-    linkNeighbour("prev-ride", activities[index - 1]);
-    linkNeighbour("next-ride", activities[index + 1]);
+    linkNeighbours(activities, id);
 
     renderStats(activity);
     await loadCharts(activity);
 }
+
+/** Points Previous/Next at the trainings either side of {@code id} in {@code activities}. */
+function linkNeighbours(activities, id) {
+    const index = activities.findIndex((a) => a.id === id);
+    linkNeighbour("prev-ride", activities[index - 1]);
+    linkNeighbour("next-ride", activities[index + 1]);
+}
+
+// After uploading, reload the server's list so Previous/Next include the new rides.
+setupAthleteMenu(async () => {
+    const id = Number(new URLSearchParams(location.search).get("id"));
+    linkNeighbours(await fetchActivities(true), id);
+});
 
 window.addEventListener("resize", () => {
     if (chartData) renderRideCharts(el("ride-charts"), chartData);

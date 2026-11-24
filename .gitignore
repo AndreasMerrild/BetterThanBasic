@@ -34,3 +34,9 @@ Test/Test/*.fit
 
 # Local training database
 training.db
+# Uploaded FIT files (personal training data)
+uploads/
+
+# Extra athletes (personal training data)
+athletes/
+athletes.txt
