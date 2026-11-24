@@ -119,11 +119,12 @@ function showToast(text, { sticky = false } = {}) {
 
 const UPLOAD_RETRIES = 3; // extra attempts when the connection fails or the server has a hiccup
 
-const isFitFile = (file) => file.name.toLowerCase().endsWith(".fit");
+/** FIT files and GoldenCheetah JSON ride files. */
+const isTrainingFile = (file) => /\.(fit|json)$/i.test(file.name);
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** Sends one FIT file; resolves to {name, status: "added"|"exists"|"failed", error?}. Retries on network errors. */
-async function uploadFitFile(file) {
+/** Sends one training file (.fit or .json); resolves to {name, status: "added"|"exists"|"failed", error?}. Retries on network errors. */
+async function uploadTrainingFile(file) {
     let lastError = "";
     for (let attempt = 0; attempt <= UPLOAD_RETRIES; attempt++) {
         if (attempt > 0) await pause(1000 * attempt);
@@ -158,15 +159,15 @@ window.addEventListener("beforeunload", (event) => {
  * Uploads many files one after another (the server handles one at a time anyway), showing progress,
  * then reloads the training list once and shows a full report that stays until clicked.
  */
-async function uploadFitFiles(chosen, onUploaded) {
+async function uploadTrainingFiles(chosen, onUploaded) {
     if (uploadInProgress) {
         showToast("An upload is already running. Wait for it to finish first.");
         return;
     }
-    const files = chosen.filter(isFitFile);
+    const files = chosen.filter(isTrainingFile);
     const ignored = chosen.length - files.length;
     if (files.length === 0) {
-        showToast(`No .fit files found among the ${chosen.length} selected file(s).`);
+        showToast(`No .fit or .json files found among the ${chosen.length} selected file(s).`);
         return;
     }
     uploadInProgress = true;
@@ -177,7 +178,7 @@ async function uploadFitFiles(chosen, onUploaded) {
             showToast(`Uploading ${i + 1} of ${files.length} (keep this page open)\n`
                 + `${counts.added} added · ${counts.exists} already stored · ${counts.failed} failed\n${files[i].name}`,
             { sticky: true });
-            const result = await uploadFitFile(files[i]);
+            const result = await uploadTrainingFile(files[i]);
             counts[result.status] = (counts[result.status] || 0) + 1;
             if (result.status === "failed") failures.push(result);
         }
@@ -190,10 +191,10 @@ async function uploadFitFiles(chosen, onUploaded) {
     }
 
     const lines = [
-        `Upload finished: ${files.length} FIT file${files.length === 1 ? "" : "s"}`,
+        `Upload finished: ${files.length} training file${files.length === 1 ? "" : "s"}`,
         `${counts.added} added · ${counts.exists} already stored (skipped) · ${counts.failed} failed`,
     ];
-    if (ignored) lines.push(`${ignored} other file${ignored === 1 ? "" : "s"} ignored (not .fit)`);
+    if (ignored) lines.push(`${ignored} other file${ignored === 1 ? "" : "s"} ignored (not .fit or .json)`);
     for (const f of failures.slice(0, 10)) lines.push(`✗ ${f.name}: ${f.error}`);
     if (failures.length > 10) lines.push(`…and ${failures.length - 10} more failed`);
     lines.push("(click to close)");
@@ -239,7 +240,7 @@ function menuItem(label, icon, onClick, checked) {
 }
 
 /**
- * Wires the Athlete dropdown in the top bar: switch / add / rename athletes, and upload FIT files
+ * Wires the Athlete dropdown in the top bar: switch / add / rename athletes, and upload training files
  * or a whole folder. {@code onUploaded} runs after new trainings were added and should reload the
  * page's data (it must call /api/reload, e.g. via fetchActivities(true)).
  */
@@ -267,7 +268,7 @@ async function setupAthleteMenu(onUploaded) {
         input.addEventListener("change", async () => {
             const files = [...input.files];
             input.value = ""; // so choosing the same files again still triggers a change
-            if (files.length) await uploadFitFiles(files, onUploaded);
+            if (files.length) await uploadTrainingFiles(files, onUploaded);
         });
     }
 
@@ -321,6 +322,6 @@ async function setupAthleteMenu(onUploaded) {
         }));
     }
     dropdown.append(document.createElement("hr"));
-    dropdown.append(menuItem("Upload FIT files…", ICONS.upload, () => { setOpen(false); fileInput.click(); }));
+    dropdown.append(menuItem("Upload training files (.fit, .json)…", ICONS.upload, () => { setOpen(false); fileInput.click(); }));
     dropdown.append(menuItem("Upload a folder…", ICONS.folder, () => { setOpen(false); folderInput.click(); }));
 }

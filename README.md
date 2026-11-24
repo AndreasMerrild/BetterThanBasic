@@ -67,7 +67,10 @@ Frontend files: `index.html` + `app.js` (calendar), `ride.html` + `ride.js` +
 `ride.css` (training page), `charts.js` (the graphs), `common.js` (date/number
 helpers used by both pages) and `styles.css` (shared look).
 
-Start it with the `BetterThanBasic Web` run configuration, or run the main class
+Start it with `powershell -ExecutionPolicy Bypass -File .
+un-server.ps1` (compiles and
+starts on port 8080; add `-Port 9000` for another port), with the `BetterThanBasic Web`
+run configuration, or run the main class
 `Server.WebServer` from the project root (so `frontend/` and `training.db` are
 found), then open <http://localhost:8080>.
 
@@ -76,10 +79,16 @@ it are imported into `training.db` before the server starts. The ↻ button in t
 top bar re-reads the database, e.g. after importing files through the console app.
 
 To add trainings from the browser, open the **Athlete** menu (top right) and choose
-**Upload FIT files…** (select as many as you like) or **Upload a folder…** (every `.fit`
-file in the folder and its subfolders). Files are sent one at a time with automatic
+**Upload training files (.fit, .json)…** (select as many as you like) or **Upload a folder…**
+(every `.fit` and `.json` file in the folder and its subfolders). `.json` files are
+GoldenCheetah ride files (`RIDE` → `SAMPLES` with `SECS`, `WATTS`, `HR`, `KPH`, `CAD`, `KM`);
+they are read by `Fit.GoldenCheetahParser` (with a small built-in JSON reader, no library)
+into the same data as FIT files, so they appear in the calendar, ride page and graphs the
+same way. Laps come from the `Lap N` intervals and FTP from the session data. Files are sent one at a time with automatic
 retries, the page warns before you leave it mid-upload, and a report at the end lists
-how many were added, already stored (skipped, by file name) or failed, and why.
+how many were added, already stored (skipped) or failed, and why. A file counts as already
+stored when a file with the same name was imported before, or when a stored ride starts
+within 2 minutes of it (the same ride saved as both FIT and JSON is only kept once).
 
 The same menu switches between athletes, adds a new one and renames the current one.
 Every athlete has their own trainings: the first athlete uses `training.db` and
@@ -91,5 +100,5 @@ The server uses only the JDK's built-in `com.sun.net.httpserver` and listens on
 localhost only. API: `GET /api/athletes` lists athletes; every training request takes `?athlete=<id>`
 (default: the first athlete). `GET /api/activities` returns per-training summaries as JSON;
 `GET /api/activities/{id}/records` returns one training's samples for the graphs
-(the id is the training's start time in epoch milliseconds); `POST /api/upload?name=<file>.fit`
+(the id is the training's start time in epoch milliseconds); `POST /api/upload?name=<file>.fit|.json`
 with the raw file as the body and the header `X-BetterThanBasic-Upload: 1` imports a FIT file.

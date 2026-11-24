@@ -57,7 +57,7 @@ public final class FitDatabase {
         try (Connection connection = connect()) {
             Long id = findId(connection, source);
             if (id == null) {
-                id = insert(connection, source, new FitParser().parse(file));
+                id = insert(connection, source, parseFile(file));
             }
             return load(connection, id).get(0);
         } catch (SQLException exception) {
@@ -65,7 +65,67 @@ public final class FitDatabase {
         }
     }
 
-    /** Whether a FIT file with this file name has already been imported. */
+    /** What {@link #importNew} did with a file. */
+    public enum ImportStatus {
+        /** The training was stored. */
+        ADDED,
+        /** A file with this name was imported before. */
+        SAME_FILE,
+        /** Another file holds the same ride (it starts within {@link #SAME_RIDE_WINDOW}), e.g. a FIT and a JSON copy. */
+        SAME_RIDE
+    }
+
+    /** Rides that start this close together are treated as the same ride recorded in two files. */
+    public static final Duration SAME_RIDE_WINDOW = Duration.ofMinutes(2);
+
+    /** Reads a training file: GoldenCheetah {@code .json} or FIT (anything else). */
+    public static FitActivity parseFile(Path file) throws IOException {
+        String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
+        return name.endsWith(".json") ? new GoldenCheetahParser().parse(file) : new FitParser().parse(file);
+    }
+
+    /** Whether this is a file type that {@link #parseFile} can read. */
+    public static boolean isTrainingFile(Path file) {
+        String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
+        return name.endsWith(".fit") || name.endsWith(".json");
+    }
+
+    /**
+     * Stores {@code file} unless the same file, or the same ride from another file, is already stored.
+     * Throws IOException when the file cannot be read.
+     */
+    public ImportStatus importNew(Path file) throws IOException {
+        String source = file.getFileName().toString();
+        try (Connection connection = connect()) {
+            if (findId(connection, source) != null) {
+                return ImportStatus.SAME_FILE;
+            }
+            FitActivity activity = parseFile(file);
+            if (hasRideStartingNear(connection, activity.startTime())) {
+                return ImportStatus.SAME_RIDE;
+            }
+            insert(connection, source, activity);
+            return ImportStatus.ADDED;
+        } catch (SQLException exception) {
+            throw new IOException("Database error for " + source + ": " + exception.getMessage(), exception);
+        }
+    }
+
+    private static boolean hasRideStartingNear(Connection connection, Instant start) throws SQLException {
+        if (start == null) {
+            return false;
+        }
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT 1 FROM activities WHERE start_time BETWEEN ? AND ? LIMIT 1")) {
+            statement.setLong(1, start.minus(SAME_RIDE_WINDOW).toEpochMilli());
+            statement.setLong(2, start.plus(SAME_RIDE_WINDOW).toEpochMilli());
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next();
+            }
+        }
+    }
+
+    /** Whether a training file with this file name has already been imported. */
     public boolean contains(String fileName) throws IOException {
         try (Connection connection = connect()) {
             return findId(connection, fileName) != null;
@@ -74,7 +134,10 @@ public final class FitDatabase {
         }
     }
 
-    /** Imports every new FIT file directly inside {@code directory}; returns how many were added. */
+    /**
+     * Imports every new training file (FIT or GoldenCheetah JSON) directly inside {@code directory};
+     * returns how many were added. Files holding a ride that is already stored are skipped.
+     */
     public int importDirectory(Path directory) throws IOException {
         if (directory == null || !Files.isDirectory(directory)) {
             throw new IOException("FIT file directory does not exist: " + directory);
@@ -82,21 +145,14 @@ public final class FitDatabase {
         List<Path> files;
         try (Stream<Path> paths = Files.list(directory)) {
             files = paths.filter(Files::isRegularFile)
-                    .filter(path -> path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".fit"))
+                    .filter(FitDatabase::isTrainingFile)
                     .toList();
         }
         int added = 0;
-        try (Connection connection = connect()) {
-            FitParser parser = new FitParser();
-            for (Path file : files) {
-                String source = file.getFileName().toString();
-                if (findId(connection, source) == null) {
-                    insert(connection, source, parser.parse(file));
-                    added++;
-                }
+        for (Path file : files) {
+            if (importNew(file) == ImportStatus.ADDED) {
+                added++;
             }
-        } catch (SQLException exception) {
-            throw new IOException("Database error: " + exception.getMessage(), exception);
         }
         return added;
     }
