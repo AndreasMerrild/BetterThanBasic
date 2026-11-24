@@ -2,7 +2,9 @@
 
 // BetterThanBasic calendar: plain JavaScript, no dependencies.
 
-const WEEKS_SHOWN = 6;
+const WEEKS_AROUND = 8;      // weeks rendered before/after the target when jumping
+const WEEKS_PER_LOAD = 8;    // weeks added when scrolling near the top or bottom
+const LOAD_MARGIN_PX = 400;  // how close to an edge the scroll must get before loading more
 const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const BIKE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="16.5" r="3.5"/>'
     + '<circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h6l3.5 7.5M9 9l3 7.5h-6.5M15 9l-1.5-3H11'
@@ -11,7 +13,8 @@ const BIKE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" 
 const state = {
     activities: [],
     byDay: new Map(),   // "YYYY-MM-DD" -> activities that started that (local) day
-    anchor: startOfWeek(new Date()), // Monday of the first week shown
+    first: startOfWeek(new Date()), // Monday of the first rendered week
+    last: startOfWeek(new Date()),  // Monday of the last rendered week
 };
 
 const el = (id) => document.getElementById(id);
@@ -63,11 +66,6 @@ function escapeHtml(text) {
     return String(text).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-function metric(value, unit, cls = "") {
-    if (value == null) return `<span class="metric na"><b>–</b><span class="unit">${unit}</span></span>`;
-    return `<span class="metric"><b class="${cls}">${value}</b><span class="unit">${unit}</span></span>`;
-}
-
 // ---------- Data ----------
 
 async function loadActivities(reload = false) {
@@ -97,19 +95,11 @@ function setActivities(list) {
 
 // ---------- Rendering ----------
 
-function render() {
+/** HTML for every week from Monday {@code from} through Monday {@code to}, inclusive. */
+function weeksHtml(from, to) {
     const today = dayKey(new Date());
-    const first = state.anchor;
-    const last = addDays(first, WEEKS_SHOWN * 7 - 1);
-    el("range-label").textContent = `${shortDate.format(first)} – ${shortDate.format(last)} ${last.getFullYear()}`;
-    el("jump-date").value = dayKey(first);
-
-    el("cal-head").innerHTML = "<div></div>" + DAY_NAMES.map((d) => `<div>${d}</div>`).join("");
-
-    const focusMonth = addDays(first, 14).getMonth();
     let html = "";
-    for (let w = 0; w < WEEKS_SHOWN; w++) {
-        const monday = addDays(first, w * 7);
+    for (let monday = from; monday <= to; monday = addDays(monday, 7)) {
         let days = "";
         const weekActivities = [];
         for (let i = 0; i < 7; i++) {
@@ -120,16 +110,38 @@ function render() {
             const classes = ["day"];
             if (key === today) classes.push("today");
             if (i >= 5) classes.push("weekend");
-            if (date.getMonth() !== focusMonth) classes.push("other-month");
             const label = date.getDate() === 1 || i === 0 ? shortDate.format(date) : date.getDate();
             days += `<div class="${classes.join(" ")}">
                 <div class="band">${key === today ? "Today" : label}</div>
                 <div class="workouts">${activities.map(workoutCard).join("")}</div>
             </div>`;
         }
-        html += `<section class="week">${weekSummary(monday, weekActivities)}${days}</section>`;
+        html += `<section class="week" data-monday="${dayKey(monday)}">`
+            + `${weekSummary(monday, weekActivities)}${days}</section>`;
     }
-    el("weeks").innerHTML = html;
+    return html;
+}
+
+function renderRange(first, last) {
+    state.first = first;
+    state.last = last;
+    el("weeks").innerHTML = weeksHtml(first, last);
+}
+
+/** Adds weeks above the current ones without moving what the user is looking at. */
+function prependWeeks(count) {
+    const container = el("calendar");
+    const heightBefore = container.scrollHeight;
+    const newFirst = addDays(state.first, -7 * count);
+    el("weeks").insertAdjacentHTML("afterbegin", weeksHtml(newFirst, addDays(state.first, -7)));
+    state.first = newFirst;
+    container.scrollTop += container.scrollHeight - heightBefore;
+}
+
+function appendWeeks(count) {
+    const newLast = addDays(state.last, 7 * count);
+    el("weeks").insertAdjacentHTML("beforeend", weeksHtml(addDays(state.last, 7), newLast));
+    state.last = newLast;
 }
 
 function weekSummary(monday, activities) {
@@ -138,27 +150,34 @@ function weekSummary(monday, activities) {
     const rows = activities.length === 0 ? "" : `
         <table>
             <tr><td>Trainings</td><td>${activities.length}</td></tr>
-            <tr><td>TSS</td><td>${tss > 0 ? `<span class="tss">${Math.round(tss)}</span>` : "–"}</td></tr>
-            <tr><td>Time</td><td>${formatDuration(sum("durationSeconds"))}</td></tr>
+            <tr><td>Duration</td><td>${formatDuration(sum("durationSeconds"))}</td></tr>
             <tr><td>Distance</td><td>${sum("distanceKm").toFixed(1)} km</td></tr>
+            <tr><td>TSS</td><td>${tss > 0 ? Math.round(tss) : "–"}</td></tr>
         </table>`;
     return `<div class="week-summary"><div class="band">Week ${isoWeek(monday)}</div>${rows}</div>`;
 }
 
 function workoutCard(a) {
     const start = new Date(a.start);
-    return `<button class="workout" data-id="${a.id}" type="button">
-        <div class="workout-title">
-            <span class="workout-icon">${BIKE_ICON}</span>
-            <span class="workout-name">Ride<small>${timeOfDay.format(start)}${a.tss ? ` · ${Math.round(a.tss)} TSS` : ""}</small></span>
-        </div>
-        <div class="metrics">
-            ${metric(a.distanceKm > 0 ? fixed(a.distanceKm, 1) : null, "km")}
-            ${metric(formatDuration(a.durationSeconds), "")}
-            ${metric(a.avgSpeedKmh > 0 ? fixed(a.avgSpeedKmh, 1) : null, "km/h")}
-            ${metric(fixed(a.avgPower), "W")}
-            ${metric(fixed(a.avgHeartRate), "bpm", "hr")}
-        </div>
+    const part = (value, unit) => (value == null ? "–" : `${value}${unit}`);
+    const line1 = [
+        formatDuration(a.durationSeconds),
+        part(a.distanceKm > 0 ? fixed(a.distanceKm, 1) : null, " km"),
+        part(a.tss ? Math.round(a.tss) : null, " TSS"),
+    ].join(" / ");
+    const line2 = [
+        part(a.avgSpeedKmh > 0 ? fixed(a.avgSpeedKmh, 1) : null, " km/h"),
+        part(fixed(a.avgPower), " W"),
+        `<span class="hr">${part(fixed(a.avgHeartRate), "&#9829;")}</span>`,
+    ].join(" / ");
+    return `<button class="workout" data-id="${a.id}" type="button"
+            title="Time / distance / TSS · avg speed / avg power / avg heart rate">
+        <span class="workout-icon">${BIKE_ICON}</span>
+        <span class="workout-text">
+            <div class="workout-name">Ride ${timeOfDay.format(start)}</div>
+            <div class="workout-line">${line1}</div>
+            <div class="workout-line">${line2}</div>
+        </span>
     </button>`;
 }
 
@@ -187,14 +206,54 @@ function showDetails(activity) {
 
 // ---------- Navigation ----------
 
+const monthYear = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" });
+
+function parseKey(key) {
+    const [y, m, d] = key.split("-").map(Number);
+    return new Date(y, m - 1, d);
+}
+
+function headHeight() {
+    return el("cal-head").offsetHeight;
+}
+
+/** Monday of the week currently at the top of the scroll area. */
+function topWeek() {
+    const top = el("calendar").scrollTop + headHeight();
+    for (const section of el("weeks").children) {
+        if (section.offsetTop + section.offsetHeight > top + 1) return parseKey(section.dataset.monday);
+    }
+    return state.first;
+}
+
+function scrollToWeek(monday) {
+    while (monday < state.first) prependWeeks(WEEKS_PER_LOAD);
+    while (monday > state.last) appendWeeks(WEEKS_PER_LOAD);
+    const section = el("weeks").querySelector(`[data-monday="${dayKey(monday)}"]`);
+    el("calendar").scrollTop = section.offsetTop - headHeight();
+    onScroll();
+}
+
 function goTo(date) {
-    state.anchor = addDays(startOfWeek(date), -7); // keep one week of context above the target
-    render();
+    const target = startOfWeek(date);
+    renderRange(addDays(target, -7 * WEEKS_AROUND), addDays(target, 7 * WEEKS_AROUND));
+    scrollToWeek(addDays(target, -7)); // keep one week of context above the target
 }
 
 function shift(weeks) {
-    state.anchor = addDays(state.anchor, weeks * 7);
-    render();
+    scrollToWeek(addDays(topWeek(), weeks * 7));
+}
+
+/** Loads more weeks near either edge and keeps the header label in sync with what is visible. */
+function onScroll() {
+    const container = el("calendar");
+    if (container.scrollTop < LOAD_MARGIN_PX) prependWeeks(WEEKS_PER_LOAD);
+    if (container.scrollTop + container.clientHeight > container.scrollHeight - LOAD_MARGIN_PX) {
+        appendWeeks(WEEKS_PER_LOAD);
+    }
+    const top = topWeek();
+    el("range-label").textContent = monthYear.format(addDays(top, 3));
+    el("jump-date").value = dayKey(top);
 }
 
 function wireEvents() {
@@ -212,9 +271,12 @@ function wireEvents() {
         }
     });
     el("reload").addEventListener("click", async () => {
+        const top = topWeek();
         await loadActivities(true);
-        render();
+        renderRange(state.first, state.last);
+        scrollToWeek(top);
     });
+    el("calendar").addEventListener("scroll", onScroll, { passive: true });
     el("weeks").addEventListener("click", (event) => {
         const card = event.target.closest(".workout");
         if (!card) return;
@@ -232,6 +294,7 @@ function wireEvents() {
 }
 
 async function init() {
+    el("cal-head").innerHTML = "<div></div>" + DAY_NAMES.map((d) => `<div>${d}</div>`).join("");
     wireEvents();
     await loadActivities();
     // Open on today, unless nothing has been ridden recently: then show the latest training.
