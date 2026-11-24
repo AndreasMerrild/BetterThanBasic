@@ -1,0 +1,49 @@
+/* Ride page (ride.html). Shared look — top bar, toolbar, footer, colours — comes from styles.css. */
+
+.ride-page { flex: 1; min-height: 0; overflow: auto; }
+
+/* ---------- Stat tiles: label above value ---------- */
+.ride-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    margin: 0;
+    background: #fafafa;
+    border-bottom: 1px solid var(--line);
+}
+.ride-stats > div { padding: 8px 12px; border-right: 1px solid #e6e6e6; border-bottom: 1px solid #e6e6e6; }
+.ride-stats dt { color: var(--muted); font-size: 12px; }
+.ride-stats dd { margin: 2px 0 0; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ride-stats dd small { font-size: 12px; font-weight: 400; color: var(--muted); }
+
+/* ---------- Graphs (drawn by charts.js) ---------- */
+.ride-charts { position: relative; padding: 12px 20px 20px; min-height: 120px; color: var(--muted); }
+.ride-chart + .ride-chart { margin-top: 10px; }
+.ride-chart-title { display: flex; gap: 10px; align-items: baseline; font-size: 12px; color: var(--muted); }
+.ride-chart-title strong { font-size: 13px; color: var(--ink); }
+.ride-chart svg { display: block; overflow: visible; }
+.ride-chart .grid { stroke: #ececec; stroke-width: 1; }
+.ride-chart .baseline { stroke: #bdbdbd; stroke-width: 1; }
+.ride-chart .lap { stroke: #9a9a9a; stroke-width: 1; stroke-dasharray: 3 3; }
+.ride-chart .tick { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.ride-chart .crosshair { stroke: #333; stroke-width: 1; }
+.ride-chart .hover-dot { stroke: #fff; stroke-width: 2; }
+.ride-chart .hit { cursor: crosshair; }
+
+/* ---------- Hover tooltip ---------- */
+.ride-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .15);
+    padding: 6px 10px;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    z-index: 5;
+}
+.ride-tooltip-time { color: var(--ink); font-weight: 600; margin-bottom: 3px; }
+.ride-tooltip-row { display: flex; align-items: center; gap: 6px; line-height: 1.6; }
+.ride-tooltip-row .key { width: 12px; height: 2px; border-radius: 1px; }
+.ride-tooltip-row strong { color: var(--ink); font-variant-numeric: tabular-nums; min-width: 64px; }

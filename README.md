@@ -56,7 +56,16 @@ The `frontend/` directory holds a dependency-free web frontend (plain HTML, CSS
 and JavaScript) styled after the old Today's Plan calendar. Each week row shows
 the stored trainings on their dates with distance, time, average speed, average
 power and average heart rate, plus a weekly summary (count, TSS, time, distance).
-Click a training to see more details (NP, IF, TSS, cadence, laps).
+Click a training to open its own page (`ride.html?id=N`) with more details (NP,
+IF, TSS, cadence, laps) and graphs of
+power (3 s smoothed), heart rate, speed and cadence over the whole training,
+stacked on one time axis with dashed lap markers. Hover a graph to read every
+value at that moment. Previous/Next (or ← →) step through trainings, and "Back to
+calendar" returns to that week.
+
+Frontend files: `index.html` + `app.js` (calendar), `ride.html` + `ride.js` +
+`ride.css` (training page), `charts.js` (the graphs), `common.js` (date/number
+helpers used by both pages) and `styles.css` (shared look).
 
 Start it with the `BetterThanBasic Web` run configuration, or run the main class
 `Server.WebServer` from the project root (so `frontend/` and `training.db` are
@@ -67,4 +76,5 @@ it are imported into `training.db` before the server starts. The ↻ button in t
 top bar re-reads the database, e.g. after importing files through the console app.
 
 The server uses only the JDK's built-in `com.sun.net.httpserver` and listens on
-localhost only. API: `GET /api/activities` returns per-training summaries as JSON.
+localhost only. API: `GET /api/activities` returns per-training summaries as JSON;
+`GET /api/activities/{id}/records` returns one training's samples for the graphs.

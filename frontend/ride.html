@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BetterThanBasic · Ride</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="ride.css">
+</head>
+<body>
+<header class="topbar">
+    <div class="brand">BetterThanBasic</div>
+    <nav class="nav">
+        <a class="nav-item" id="calendar-link" href="index.html">Calendar</a>
+    </nav>
+    <div class="tools">
+        <div class="user-badge">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 4a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zm0 14a8 8 0 0 1-6.2-2.95C7.2 15.4 9.5 14.5 12 14.5s4.8.9 6.2 2.55A8 8 0 0 1 12 20z"/></svg>
+            Athlete
+        </div>
+    </div>
+</header>
+
+<div class="toolbar">
+    <div class="nav-buttons">
+        <a class="button" id="back" href="index.html">&lsaquo; Back to calendar</a>
+        <a class="button" id="prev-ride" title="Previous training (←)">&lsaquo; Previous</a>
+        <a class="button" id="next-ride" title="Next training (→)">Next &rsaquo;</a>
+    </div>
+    <h1 id="ride-title">Loading…</h1>
+    <div class="status" id="ride-sub"></div>
+</div>
+
+<main class="ride-page">
+    <dl class="ride-stats" id="ride-stats"></dl>
+    <section class="ride-charts" id="ride-charts"></section>
+</main>
+
+<footer class="footer">
+    <span>BetterThanBasic</span>
+    <span>Training details</span>
+</footer>
+
+<script src="common.js"></script>
+<script src="charts.js"></script>
+<script src="ride.js"></script>
+</body>
+</html>

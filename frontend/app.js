@@ -1,6 +1,6 @@
 "use strict";
 
-// BetterThanBasic calendar: plain JavaScript, no dependencies.
+// BetterThanBasic calendar: plain JavaScript, no dependencies. Shared helpers live in common.js.
 
 const WEEKS_AROUND = 8;      // weeks rendered before/after the target when jumping
 const WEEKS_PER_LOAD = 8;    // weeks added when scrolling near the top or bottom
@@ -17,53 +17,11 @@ const state = {
     last: startOfWeek(new Date()),  // Monday of the last rendered week
 };
 
-const el = (id) => document.getElementById(id);
-
-// ---------- Date helpers (all local time) ----------
-
-function startOfWeek(date) {
-    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-    return d;
-}
-
-function addDays(date, days) {
-    const d = new Date(date);
-    d.setDate(d.getDate() + days);
-    return d;
-}
-
-function dayKey(date) {
-    const pad = (n) => String(n).padStart(2, "0");
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
-
 function isoWeek(date) {
     const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
     const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
     return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
-}
-
-const shortDate = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" });
-const longDate = new Intl.DateTimeFormat(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-const timeOfDay = new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" });
-
-// ---------- Formatting ----------
-
-function formatDuration(seconds) {
-    if (seconds == null) return null;
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    return h > 0 ? `${h}h:${String(m).padStart(2, "0")}m` : `${m}m:${String(Math.round(seconds % 60)).padStart(2, "0")}s`;
-}
-
-function fixed(value, digits = 0) {
-    return value == null ? null : value.toFixed(digits);
-}
-
-function escapeHtml(text) {
-    return String(text).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
 // ---------- Data ----------
@@ -72,9 +30,7 @@ async function loadActivities(reload = false) {
     el("status").textContent = "Loading…";
     el("reload").classList.add("spinning");
     try {
-        const response = await fetch(reload ? "/api/reload" : "/api/activities", { method: reload ? "POST" : "GET" });
-        if (!response.ok) throw new Error(`Server answered ${response.status}`);
-        setActivities(await response.json());
+        setActivities(await fetchActivities(reload));
         el("status").textContent = `${state.activities.length} trainings stored`;
     } catch (error) {
         el("status").textContent = `Could not load trainings: ${error.message}`;
@@ -84,7 +40,7 @@ async function loadActivities(reload = false) {
 }
 
 function setActivities(list) {
-    state.activities = list.filter((a) => a.start != null).sort((a, b) => a.start - b.start);
+    state.activities = list;
     state.byDay = new Map();
     for (const activity of state.activities) {
         const key = dayKey(new Date(activity.start));
@@ -157,6 +113,7 @@ function weekSummary(monday, activities) {
     return `<div class="week-summary"><div class="band">Week ${isoWeek(monday)}</div>${rows}</div>`;
 }
 
+/** A training in the calendar; it links to that training's own page (ride.html). */
 function workoutCard(a) {
     const start = new Date(a.start);
     const part = (value, unit) => (value == null ? "–" : `${value}${unit}`);
@@ -170,7 +127,7 @@ function workoutCard(a) {
         part(fixed(a.avgPower), " W"),
         `<span class="hr">${part(fixed(a.avgHeartRate), "&#9829;")}</span>`,
     ].join(" / ");
-    return `<button class="workout" data-id="${a.id}" type="button"
+    return `<a class="workout" href="${rideUrl(a)}"
             title="Time / distance / TSS · avg speed / avg power / avg heart rate">
         <span class="workout-icon">${BIKE_ICON}</span>
         <span class="workout-text">
@@ -178,40 +135,10 @@ function workoutCard(a) {
             <div class="workout-line">${line1}</div>
             <div class="workout-line">${line2}</div>
         </span>
-    </button>`;
-}
-
-function showDetails(activity) {
-    const start = new Date(activity.start);
-    el("details-title").textContent = `Ride · ${timeOfDay.format(start)}`;
-    el("details-sub").textContent = longDate.format(start) + (activity.device ? ` · ${activity.device}` : "");
-    const rows = [
-        ["Duration", formatDuration(activity.durationSeconds)],
-        ["Distance", fixed(activity.distanceKm, 2), "km"],
-        ["Avg speed", fixed(activity.avgSpeedKmh, 1), "km/h"],
-        ["Avg power", fixed(activity.avgPower), "W"],
-        ["Normalized power", fixed(activity.normalizedPower), "W"],
-        ["Avg heart rate", fixed(activity.avgHeartRate), "bpm"],
-        ["Max heart rate", activity.maxHeartRate, "bpm"],
-        ["Avg cadence", fixed(activity.avgCadence), "rpm"],
-        ["FTP (head unit)", activity.ftp, "W"],
-        ["Intensity factor", fixed(activity.intensityFactor, 2)],
-        ["TSS", fixed(activity.tss)],
-        ["Laps", activity.laps],
-    ];
-    el("details-list").innerHTML = rows.map(([label, value, unit]) =>
-        `<dt>${label}</dt><dd>${value == null ? "–" : escapeHtml(value) + (unit ? ` ${unit}` : "")}</dd>`).join("");
-    el("details").showModal();
+    </a>`;
 }
 
 // ---------- Navigation ----------
-
-const monthYear = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" });
-
-function parseKey(key) {
-    const [y, m, d] = key.split("-").map(Number);
-    return new Date(y, m - 1, d);
-}
 
 function headHeight() {
     return el("cal-head").offsetHeight;
@@ -244,7 +171,10 @@ function shift(weeks) {
     scrollToWeek(addDays(topWeek(), weeks * 7));
 }
 
-/** Loads more weeks near either edge and keeps the header label in sync with what is visible. */
+/**
+ * Loads more weeks near either edge and keeps the header label in sync with what is visible.
+ * The URL hash remembers the position, so coming back from a ride page returns to the same weeks.
+ */
 function onScroll() {
     const container = el("calendar");
     if (container.scrollTop < LOAD_MARGIN_PX) prependWeeks(WEEKS_PER_LOAD);
@@ -254,6 +184,7 @@ function onScroll() {
     const top = topWeek();
     el("range-label").textContent = monthYear.format(addDays(top, 3));
     el("jump-date").value = dayKey(top);
+    history.replaceState(null, "", `#${dayKey(addDays(top, 7))}`); // goTo() shows this week second
 }
 
 function wireEvents() {
@@ -265,10 +196,7 @@ function wireEvents() {
         if (latest) goTo(new Date(latest.start));
     });
     el("jump-date").addEventListener("change", (event) => {
-        if (event.target.value) {
-            const [y, m, d] = event.target.value.split("-").map(Number);
-            goTo(new Date(y, m - 1, d));
-        }
+        if (event.target.value) goTo(parseKey(event.target.value));
     });
     el("reload").addEventListener("click", async () => {
         const top = topWeek();
@@ -277,17 +205,8 @@ function wireEvents() {
         scrollToWeek(top);
     });
     el("calendar").addEventListener("scroll", onScroll, { passive: true });
-    el("weeks").addEventListener("click", (event) => {
-        const card = event.target.closest(".workout");
-        if (!card) return;
-        const activity = state.activities.find((a) => a.id === Number(card.dataset.id));
-        if (activity) showDetails(activity);
-    });
-    el("details").addEventListener("click", (event) => {
-        if (event.target === el("details")) el("details").close(); // click on backdrop
-    });
     document.addEventListener("keydown", (event) => {
-        if (event.target.tagName === "INPUT" || el("details").open) return;
+        if (event.target.tagName === "INPUT") return;
         if (event.key === "ArrowLeft") shift(-1);
         if (event.key === "ArrowRight") shift(1);
     });
@@ -297,7 +216,13 @@ async function init() {
     el("cal-head").innerHTML = "<div></div>" + DAY_NAMES.map((d) => `<div>${d}</div>`).join("");
     wireEvents();
     await loadActivities();
-    // Open on today, unless nothing has been ridden recently: then show the latest training.
+    // index.html#YYYY-MM-DD opens on that week (used by the ride page's "Back to calendar").
+    const hash = location.hash.slice(1);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(hash)) {
+        goTo(parseKey(hash));
+        return;
+    }
+    // Otherwise open on today, unless nothing has been ridden recently: then show the latest training.
     const latest = state.activities.at(-1);
     const recent = latest && Date.now() - latest.start < 28 * 86400000;
     goTo(latest && !recent ? new Date(latest.start) : new Date());
