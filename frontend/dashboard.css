@@ -1,0 +1,88 @@
+/* Dashboard (dashboard.html). Shared look (top bar, toolbar, footer, colours) comes from styles.css. */
+
+.period-bar { flex-wrap: wrap; }
+.nav-buttons button.active { background: var(--red); border-color: var(--red); color: #fff; }
+
+.custom-range { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.custom-range[hidden] { display: none; }
+.custom-range input { font: inherit; padding: 2px 4px; border: 1px solid var(--line); border-radius: 3px; }
+.custom-range button {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 3px 10px;
+}
+.custom-range button:hover { border-color: var(--red); color: var(--red); }
+
+.dashboard { flex: 1; min-height: 0; overflow: auto; padding: 16px 20px 24px; background: #f6f6f6; }
+
+/* ---------- Summary tiles ---------- */
+.tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.tile { background: #fff; border: 1px solid var(--line); border-radius: 4px; padding: 12px 14px; }
+.tile-label { font-size: 12px; color: var(--muted); }
+.tile-value { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.tile-note { font-size: 12px; color: var(--muted); min-height: 1em; }
+
+/* ---------- Panels ---------- */
+.panel { background: #fff; border: 1px solid var(--line); border-radius: 4px; padding: 14px 18px 16px; margin-bottom: 16px; }
+.panel-head h2 { margin: 0; font-size: 16px; }
+.panel-head p { margin: 2px 0 8px; font-size: 13px; color: var(--muted); }
+
+.legend { display: flex; gap: 18px; font-size: 13px; min-height: 0; }
+.legend:empty { display: none; }
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-key { width: 18px; border-top: 2px solid; }
+.legend-key.dashed { border-top-style: dashed; }
+
+/* ---------- Power curve ---------- */
+.curve { position: relative; margin-top: 6px; color: var(--muted); }
+.curve svg { display: block; overflow: visible; }
+.curve .grid { stroke: #ececec; stroke-width: 1; }
+.curve .baseline { stroke: #bdbdbd; stroke-width: 1; }
+.curve .tick { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.curve .crosshair { stroke: #333; stroke-width: 1; }
+.curve .hover-dot { stroke: #fff; stroke-width: 2; }
+.curve .hit { cursor: crosshair; }
+
+.curve-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .15);
+    padding: 6px 10px;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    z-index: 5;
+}
+.curve-tooltip-title { color: var(--ink); font-weight: 600; margin-bottom: 3px; }
+.curve-tooltip-row { display: flex; align-items: center; gap: 6px; line-height: 1.6; }
+.curve-tooltip-row .key { width: 12px; height: 2px; border-radius: 1px; }
+.curve-tooltip-row strong { color: var(--ink); font-variant-numeric: tabular-nums; min-width: 52px; }
+
+/* ---------- Best numbers table ---------- */
+.table-wrap { overflow-x: auto; }
+.bests { border-collapse: collapse; width: 100%; font-size: 13px; }
+.bests th {
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+    padding: 6px 10px;
+}
+.bests td { padding: 5px 10px; border-bottom: 1px solid #efefef; }
+.bests tbody tr:hover { background: #fafafa; }
+.bests .num { font-variant-numeric: tabular-nums; text-align: right; }
+.bests th:nth-child(2), .bests th:nth-child(4), .bests th:nth-child(5) { text-align: right; }
+.bests a { color: var(--red-dark); text-decoration: none; }
+.bests a:hover { text-decoration: underline; }
+.bests .muted, .bests .empty { color: var(--muted); }
+.bests .record { color: var(--ink); font-weight: 600; }

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BetterThanBasic · Dashboard</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+<header class="topbar">
+    <div class="brand">BetterThanBasic</div>
+    <nav class="nav">
+        <a class="nav-item active" href="dashboard.html">Dashboard</a>
+        <a class="nav-item" href="index.html">Calendar</a>
+    </nav>
+    <div class="tools">
+        <div class="athlete-menu">
+            <button class="user-badge" id="athlete-button" type="button" aria-haspopup="menu" aria-expanded="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 4a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zm0 14a8 8 0 0 1-6.2-2.95C7.2 15.4 9.5 14.5 12 14.5s4.8.9 6.2 2.55A8 8 0 0 1 12 20z"/></svg>
+                <span id="athlete-name">Athlete</span> <span class="caret" aria-hidden="true">&#9662;</span>
+            </button>
+            <!-- Filled by setupAthleteMenu() in common.js -->
+            <div class="menu" id="athlete-dropdown" role="menu" hidden></div>
+            <input type="file" id="upload-input" accept=".fit,.FIT,.json,.JSON" multiple hidden>
+            <input type="file" id="upload-folder-input" webkitdirectory multiple hidden>
+        </div>
+    </div>
+</header>
+
+<div class="toolbar period-bar">
+    <div class="nav-buttons" role="group" aria-label="Time period" id="periods">
+        <button type="button" data-days="7">Last 7 days</button>
+        <button type="button" data-days="42">42 days</button>
+        <button type="button" data-days="90">90 days</button>
+        <button type="button" data-days="365">365 days</button>
+        <button type="button" data-days="all">All time</button>
+        <button type="button" data-days="custom">Custom…</button>
+    </div>
+    <form class="custom-range" id="custom-range" hidden>
+        <label>From <input type="date" id="custom-from" required></label>
+        <label>To <input type="date" id="custom-to" required></label>
+        <button type="submit">Show</button>
+    </form>
+    <h1 id="period-label"></h1>
+    <div class="status" id="status"></div>
+</div>
+
+<main class="dashboard">
+    <section class="tiles" id="tiles" aria-label="Period summary"></section>
+
+    <section class="panel">
+        <header class="panel-head">
+            <h2>Power curve</h2>
+            <p>Best average power for each duration in the period<span id="compare-note"></span>.</p>
+        </header>
+        <div class="legend" id="legend"></div>
+        <div class="curve" id="curve"></div>
+    </section>
+
+    <section class="panel">
+        <header class="panel-head">
+            <h2>Best numbers</h2>
+            <p>Click a date to open that ride.</p>
+        </header>
+        <div class="table-wrap">
+            <table class="bests" id="bests"></table>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <span>BetterThanBasic</span>
+    <span>Dashboard</span>
+</footer>
+
+<script src="common.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>

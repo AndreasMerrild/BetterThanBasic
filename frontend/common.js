@@ -68,25 +68,38 @@ function currentAthleteId() {
     return localStorage.getItem(ATHLETE_STORAGE_KEY) || "default";
 }
 
+/** The viewer's time zone, so the server groups rides by the right local day. */
+const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
 /** An API address for the current athlete, e.g. apiUrl("/api/upload", { name: "ride.fit" }). */
 function apiUrl(path, params = {}) {
-    return `${path}?${new URLSearchParams({ athlete: currentAthleteId(), ...params })}`;
+    return `${path}?${new URLSearchParams({ athlete: currentAthleteId(), tz: TIME_ZONE, ...params })}`;
 }
 
 /** Header for requests that change data (the server refuses changes without it). */
 const WRITE_HEADERS = { "X-BetterThanBasic-Upload": "1" };
 
-/** All training summaries of the current athlete, oldest first. */
-async function fetchActivities(reload = false) {
-    const response = await fetch(apiUrl(reload ? "/api/reload" : "/api/activities"), { method: reload ? "POST" : "GET" });
-    if (!response.ok) throw new Error(`Server answered ${response.status}`);
-    const list = await response.json();
-    return list.filter((a) => a.start != null).sort((a, b) => a.start - b.start);
+/**
+ * GETs an API answer for the current athlete. All numbers (totals, bests, averages, ...) are worked
+ * out by the server; the pages only format and draw them.
+ */
+async function apiGet(path, params = {}) {
+    const response = await fetch(apiUrl(path, params));
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body.error || `Server answered ${response.status}`);
+    return body;
 }
 
-/** Link to a training's own page. */
-function rideUrl(activity) {
-    return `ride.html?${new URLSearchParams({ athlete: currentAthleteId(), id: activity.id })}`;
+/** Makes the server re-read the current athlete's database (after uploads or outside changes). */
+async function reloadTrainings() {
+    const response = await fetch(apiUrl("/api/reload"), { method: "POST" });
+    if (!response.ok) throw new Error(`Server answered ${response.status}`);
+}
+
+/** Link to a training's own page (a ride id is its start time in epoch ms). */
+function rideUrl(rideOrId) {
+    const id = typeof rideOrId === "object" ? rideOrId.id : rideOrId;
+    return `ride.html?${new URLSearchParams({ athlete: currentAthleteId(), id })}`;
 }
 
 /** Link back to the calendar, opened on the week of {@code date}. */
@@ -241,8 +254,8 @@ function menuItem(label, icon, onClick, checked) {
 
 /**
  * Wires the Athlete dropdown in the top bar: switch / add / rename athletes, and upload training files
- * or a whole folder. {@code onUploaded} runs after new trainings were added and should reload the
- * page's data (it must call /api/reload, e.g. via fetchActivities(true)).
+ * or a whole folder. {@code onUploaded} runs after new trainings were added and should fetch the
+ * page's data again (the server already includes the new rides).
  */
 async function setupAthleteMenu(onUploaded) {
     const button = el("athlete-button");

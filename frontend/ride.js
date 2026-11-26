@@ -1,23 +1,24 @@
 "use strict";
 
-// Ride page: one training's numbers and graphs. Opened as ride.html?id=<activity id>.
+// Ride page: one training's numbers and graphs. Opened as ride.html?id=<ride id>.
+// The server provides the ride's summary, its neighbours and the ready-to-draw graph data.
 
-let chartData = null;
+const rideId = new URLSearchParams(location.search).get("id");
 
-function renderStats(activity) {
+function renderStats(ride) {
     const rows = [
-        ["Duration", formatDuration(activity.durationSeconds)],
-        ["Distance", activity.distanceKm > 0 ? fixed(activity.distanceKm, 2) : null, "km"],
-        ["Avg speed", activity.avgSpeedKmh > 0 ? fixed(activity.avgSpeedKmh, 1) : null, "km/h"],
-        ["Avg power", fixed(activity.avgPower), "W"],
-        ["Normalized power", fixed(activity.normalizedPower), "W"],
-        ["Avg heart rate", fixed(activity.avgHeartRate), "bpm"],
-        ["Max heart rate", activity.maxHeartRate, "bpm"],
-        ["Avg cadence", fixed(activity.avgCadence), "rpm"],
-        ["FTP (head unit)", activity.ftp, "W"],
-        ["Intensity factor", fixed(activity.intensityFactor, 2)],
-        ["TSS", fixed(activity.tss)],
-        ["Laps", activity.laps],
+        ["Duration", formatDuration(ride.durationSeconds)],
+        ["Distance", ride.distanceKm > 0 ? fixed(ride.distanceKm, 2) : null, "km"],
+        ["Avg speed", ride.avgSpeedKmh > 0 ? fixed(ride.avgSpeedKmh, 1) : null, "km/h"],
+        ["Avg power", fixed(ride.avgPower), "W"],
+        ["Normalized power", fixed(ride.normalizedPower), "W"],
+        ["Avg heart rate", fixed(ride.avgHeartRate), "bpm"],
+        ["Max heart rate", ride.maxHeartRate, "bpm"],
+        ["Avg cadence", fixed(ride.avgCadence), "rpm"],
+        ["FTP (head unit)", ride.ftp, "W"],
+        ["Intensity factor", fixed(ride.intensityFactor, 2)],
+        ["TSS", fixed(ride.tss)],
+        ["Laps", ride.laps],
     ];
     el("ride-stats").innerHTML = rows.map(([label, value, unit]) =>
         `<div><dt>${label}</dt><dd>${value == null ? "–"
@@ -25,10 +26,10 @@ function renderStats(activity) {
 }
 
 /** Points a previous/next button at a neighbouring training, or disables it at either end. */
-function linkNeighbour(id, activity) {
-    const link = el(id);
-    if (activity) {
-        link.href = rideUrl(activity);
+function linkNeighbour(elementId, neighbourId) {
+    const link = el(elementId);
+    if (neighbourId != null) {
+        link.href = rideUrl(neighbourId);
         link.classList.remove("disabled");
     } else {
         link.removeAttribute("href");
@@ -36,67 +37,53 @@ function linkNeighbour(id, activity) {
     }
 }
 
-async function loadCharts(activity) {
+/** Fetches the ride's summary and neighbours, and fills in everything but the graphs. */
+async function loadRide() {
+    const { ride, previousId, nextId } = await apiGet(`/api/activities/${encodeURIComponent(rideId)}`);
+    const start = new Date(ride.start);
+    document.title = `BetterThanBasic · Ride ${dayKey(start)}`;
+    el("ride-title").textContent = `Ride · ${timeOfDay.format(start)} · ${longDate.format(start)}`;
+    el("ride-sub").textContent = ride.device || "";
+    el("back").href = calendarUrl(start);
+    el("calendar-link").href = calendarUrl(start);
+    linkNeighbour("prev-ride", previousId);
+    linkNeighbour("next-ride", nextId);
+    renderStats(ride);
+}
+
+let graphRequest = 0;
+
+/** Asks the server for graph data with one point per pixel of the available width, then draws it. */
+async function loadGraphs() {
     const container = el("ride-charts");
-    container.textContent = "Loading graphs…";
+    const request = ++graphRequest;
+    if (!container.querySelector("svg")) container.textContent = "Loading graphs…";
     try {
-        const response = await fetch(apiUrl(`/api/activities/${activity.id}/records`));
-        if (!response.ok) throw new Error(`Server answered ${response.status}`);
-        const data = await response.json();
-        if (!data || !Array.isArray(data.t)) {
-            // A server built before the graphs existed answers with the training list instead.
-            throw new Error("the server sent no samples. Recompile and restart the server (Server.WebServer)");
-        }
-        chartData = data;
-        renderRideCharts(container, chartData);
+        const graph = await apiGet(`/api/activities/${encodeURIComponent(rideId)}/graph`, { points: chartPlotWidth(container) });
+        if (request === graphRequest) renderRideCharts(container, graph);
     } catch (error) {
-        container.textContent = `Could not load graphs: ${error.message}`;
+        if (request === graphRequest) container.textContent = `Could not load graphs: ${error.message}`;
     }
 }
 
 async function init() {
-    const id = Number(new URLSearchParams(location.search).get("id"));
-    let activities;
     try {
-        activities = await fetchActivities();
+        await loadRide();
     } catch (error) {
-        el("ride-title").textContent = `Could not load trainings: ${error.message}`;
+        el("ride-title").textContent = error.message === "No such training" ? "Training not found"
+            : `Could not load the training: ${error.message}`;
         return;
     }
-    const index = activities.findIndex((a) => a.id === id);
-    if (index < 0) {
-        el("ride-title").textContent = "Training not found";
-        return;
-    }
-    const activity = activities[index];
-    const start = new Date(activity.start);
-
-    document.title = `BetterThanBasic · Ride ${dayKey(start)}`;
-    el("ride-title").textContent = `Ride · ${timeOfDay.format(start)} · ${longDate.format(start)}`;
-    el("ride-sub").textContent = activity.device || "";
-    el("back").href = calendarUrl(start);
-    el("calendar-link").href = calendarUrl(start);
-    linkNeighbours(activities, id);
-
-    renderStats(activity);
-    await loadCharts(activity);
+    await loadGraphs();
 }
 
-/** Points Previous/Next at the trainings either side of {@code id} in {@code activities}. */
-function linkNeighbours(activities, id) {
-    const index = activities.findIndex((a) => a.id === id);
-    linkNeighbour("prev-ride", activities[index - 1]);
-    linkNeighbour("next-ride", activities[index + 1]);
-}
+// After uploading, fetch the neighbours again so Previous/Next include the new rides.
+setupAthleteMenu(() => loadRide());
 
-// After uploading, reload the server's list so Previous/Next include the new rides.
-setupAthleteMenu(async () => {
-    const id = Number(new URLSearchParams(location.search).get("id"));
-    linkNeighbours(await fetchActivities(true), id);
-});
-
+let resizeTimer;
 window.addEventListener("resize", () => {
-    if (chartData) renderRideCharts(el("ride-charts"), chartData);
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(loadGraphs, 200); // a new width needs a matching number of points
 });
 
 document.addEventListener("keydown", (event) => {

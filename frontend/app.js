@@ -1,9 +1,10 @@
 "use strict";
 
-// BetterThanBasic calendar: plain JavaScript, no dependencies. Shared helpers live in common.js.
+// BetterThanBasic calendar. The server works out everything shown (rides per day, week numbers and
+// week totals) via /api/calendar; this file only fetches weeks, formats them and handles scrolling.
 
-const WEEKS_AROUND = 8;      // weeks rendered before/after the target when jumping
-const WEEKS_PER_LOAD = 8;    // weeks added when scrolling near the top or bottom
+const WEEKS_AROUND = 8;      // weeks shown before/after the target when jumping
+const WEEKS_PER_LOAD = 8;    // weeks fetched when scrolling near the top or bottom
 const LOAD_MARGIN_PX = 400;  // how close to an edge the scroll must get before loading more
 const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const BIKE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="16.5" r="3.5"/>'
@@ -11,107 +12,74 @@ const BIKE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" 
     + 'M13.5 6h2"/></svg>';
 
 const state = {
-    activities: [],
-    byDay: new Map(),   // "YYYY-MM-DD" -> activities that started that (local) day
-    first: startOfWeek(new Date()), // Monday of the first rendered week
-    last: startOfWeek(new Date()),  // Monday of the last rendered week
+    first: startOfWeek(new Date()), // Monday of the first week on screen
+    last: startOfWeek(new Date()),  // Monday of the last week on screen
+    latestRideDate: null,           // "YYYY-MM-DD" of the newest ride, from the server
+    loading: false,                 // a week fetch is running (scrolling waits for it)
 };
-
-function isoWeek(date) {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
-}
 
 // ---------- Data ----------
 
-async function loadActivities(reload = false) {
-    el("status").textContent = "Loading…";
-    el("reload").classList.add("spinning");
+const WEEKS_PER_REQUEST = 52; // the server answers at most 60 weeks per request
+
+/** {@code count} weeks from the server, starting with the week of {@code monday}. */
+async function fetchWeeks(monday, count) {
+    const weeks = [];
+    for (let done = 0; done < count; done += WEEKS_PER_REQUEST) {
+        const result = await apiGet("/api/calendar", {
+            from: dayKey(addDays(monday, 7 * done)),
+            weeks: Math.min(WEEKS_PER_REQUEST, count - done),
+        });
+        state.latestRideDate = result.latestRideDate;
+        el("status").textContent = `${result.rideCount} training${result.rideCount === 1 ? "" : "s"} stored`;
+        weeks.push(...result.weeks);
+    }
+    return weeks;
+}
+
+/** Runs one week fetch at a time, reporting problems in the status line. */
+async function guarded(task) {
+    if (state.loading) return;
+    state.loading = true;
     try {
-        setActivities(await fetchActivities(reload));
-        const count = state.activities.length;
-        el("status").textContent = `${count} training${count === 1 ? "" : "s"} stored`;
+        await task();
     } catch (error) {
-        el("status").textContent = `Could not load trainings: ${error.message}`;
+        el("status").textContent = `Could not load the calendar: ${error.message}`;
     } finally {
-        el("reload").classList.remove("spinning");
+        state.loading = false;
     }
 }
 
-function setActivities(list) {
-    state.activities = list;
-    state.byDay = new Map();
-    for (const activity of state.activities) {
-        const key = dayKey(new Date(activity.start));
-        if (!state.byDay.has(key)) state.byDay.set(key, []);
-        state.byDay.get(key).push(activity);
-    }
-}
+// ---------- Rendering (formatting only) ----------
 
-// ---------- Rendering ----------
-
-/** HTML for every week from Monday {@code from} through Monday {@code to}, inclusive. */
-function weeksHtml(from, to) {
+function weeksHtml(weeks) {
     const today = dayKey(new Date());
-    let html = "";
-    for (let monday = from; monday <= to; monday = addDays(monday, 7)) {
-        let days = "";
-        const weekActivities = [];
-        for (let i = 0; i < 7; i++) {
-            const date = addDays(monday, i);
-            const key = dayKey(date);
-            const activities = state.byDay.get(key) || [];
-            weekActivities.push(...activities);
+    return weeks.map((week) => {
+        const days = week.days.map((day, i) => {
+            const date = parseKey(day.date);
             const classes = ["day"];
-            if (key === today) classes.push("today");
+            if (day.date === today) classes.push("today");
             if (i >= 5) classes.push("weekend");
             const label = date.getDate() === 1 || i === 0 ? shortDate.format(date) : date.getDate();
-            days += `<div class="${classes.join(" ")}">
-                <div class="band">${key === today ? "Today" : label}</div>
-                <div class="workouts">${activities.map(workoutCard).join("")}</div>
+            return `<div class="${classes.join(" ")}">
+                <div class="band">${day.date === today ? "Today" : label}</div>
+                <div class="workouts">${day.rides.map(workoutCard).join("")}</div>
             </div>`;
-        }
-        html += `<section class="week" data-monday="${dayKey(monday)}">`
-            + `${weekSummary(monday, weekActivities)}${days}</section>`;
-    }
-    return html;
+        }).join("");
+        return `<section class="week" data-monday="${week.monday}">${weekSummary(week)}${days}</section>`;
+    }).join("");
 }
 
-function renderRange(first, last) {
-    state.first = first;
-    state.last = last;
-    el("weeks").innerHTML = weeksHtml(first, last);
-}
-
-/** Adds weeks above the current ones without moving what the user is looking at. */
-function prependWeeks(count) {
-    const container = el("calendar");
-    const heightBefore = container.scrollHeight;
-    const newFirst = addDays(state.first, -7 * count);
-    el("weeks").insertAdjacentHTML("afterbegin", weeksHtml(newFirst, addDays(state.first, -7)));
-    state.first = newFirst;
-    container.scrollTop += container.scrollHeight - heightBefore;
-}
-
-function appendWeeks(count) {
-    const newLast = addDays(state.last, 7 * count);
-    el("weeks").insertAdjacentHTML("beforeend", weeksHtml(addDays(state.last, 7), newLast));
-    state.last = newLast;
-}
-
-function weekSummary(monday, activities) {
-    const sum = (field) => activities.reduce((total, a) => total + (a[field] || 0), 0);
-    const tss = sum("tss");
-    const rows = activities.length === 0 ? "" : `
+function weekSummary(week) {
+    const totals = week.totals;
+    const rows = totals.rides === 0 ? "" : `
         <table>
-            <tr><td>Trainings</td><td>${activities.length}</td></tr>
-            <tr><td>Duration</td><td>${formatDuration(sum("durationSeconds"))}</td></tr>
-            <tr><td>Distance</td><td>${sum("distanceKm").toFixed(1)} km</td></tr>
-            <tr><td>TSS</td><td>${tss > 0 ? Math.round(tss) : "–"}</td></tr>
+            <tr><td>Trainings</td><td>${totals.rides}</td></tr>
+            <tr><td>Duration</td><td>${formatDuration(totals.durationSeconds)}</td></tr>
+            <tr><td>Distance</td><td>${fixed(totals.distanceKm, 1)} km</td></tr>
+            <tr><td>TSS</td><td>${totals.tss == null ? "–" : fixed(totals.tss)}</td></tr>
         </table>`;
-    return `<div class="week-summary"><div class="band">Week ${isoWeek(monday)}</div>${rows}</div>`;
+    return `<div class="week-summary"><div class="band">Week ${week.isoWeek}</div>${rows}</div>`;
 }
 
 /** A training in the calendar; it links to that training's own page (ride.html). */
@@ -121,7 +89,7 @@ function workoutCard(a) {
     const line1 = [
         formatDuration(a.durationSeconds),
         part(a.distanceKm > 0 ? fixed(a.distanceKm, 1) : null, " km"),
-        part(a.tss ? Math.round(a.tss) : null, " TSS"),
+        part(fixed(a.tss), " TSS"),
     ].join(" / ");
     const line2 = [
         part(a.avgSpeedKmh > 0 ? fixed(a.avgSpeedKmh, 1) : null, " km/h"),
@@ -139,6 +107,32 @@ function workoutCard(a) {
     </a>`;
 }
 
+const weeksBetween = (from, to) => Math.round((to - from) / (7 * 86400000)) + 1;
+
+async function renderRange(first, last) {
+    const weeks = await fetchWeeks(first, weeksBetween(first, last));
+    state.first = first;
+    state.last = last;
+    el("weeks").innerHTML = weeksHtml(weeks);
+}
+
+/** Adds earlier weeks above the current ones without moving what the user is looking at. */
+async function prependWeeks(count) {
+    const newFirst = addDays(state.first, -7 * count);
+    const weeks = await fetchWeeks(newFirst, count);
+    const container = el("calendar");
+    const heightBefore = container.scrollHeight;
+    el("weeks").insertAdjacentHTML("afterbegin", weeksHtml(weeks));
+    state.first = newFirst;
+    container.scrollTop += container.scrollHeight - heightBefore;
+}
+
+async function appendWeeks(count) {
+    const weeks = await fetchWeeks(addDays(state.last, 7), count);
+    el("weeks").insertAdjacentHTML("beforeend", weeksHtml(weeks));
+    state.last = addDays(state.last, 7 * count);
+}
+
 // ---------- Navigation ----------
 
 function headHeight() {
@@ -154,46 +148,61 @@ function topWeek() {
     return state.first;
 }
 
-function scrollToWeek(monday) {
-    while (monday < state.first) prependWeeks(WEEKS_PER_LOAD);
-    while (monday > state.last) appendWeeks(WEEKS_PER_LOAD);
+async function scrollToWeek(monday) {
+    if (monday < state.first) await prependWeeks(weeksBetween(monday, state.first) - 1 + WEEKS_PER_LOAD);
+    if (monday > state.last) await appendWeeks(weeksBetween(state.last, monday) - 1 + WEEKS_PER_LOAD);
     const section = el("weeks").querySelector(`[data-monday="${dayKey(monday)}"]`);
-    el("calendar").scrollTop = section.offsetTop - headHeight();
-    onScroll();
+    if (section) el("calendar").scrollTop = section.offsetTop - headHeight();
+    updateLabels();
 }
 
 function goTo(date) {
-    const target = startOfWeek(date);
-    renderRange(addDays(target, -7 * WEEKS_AROUND), addDays(target, 7 * WEEKS_AROUND));
-    scrollToWeek(addDays(target, -7)); // keep one week of context above the target
+    return guarded(async () => {
+        const target = startOfWeek(date);
+        await renderRange(addDays(target, -7 * WEEKS_AROUND), addDays(target, 7 * WEEKS_AROUND));
+        await scrollToWeek(addDays(target, -7)); // keep one week of context above the target
+    });
 }
 
 function shift(weeks) {
-    scrollToWeek(addDays(topWeek(), weeks * 7));
+    return guarded(() => scrollToWeek(addDays(topWeek(), weeks * 7)));
 }
 
 /**
- * Loads more weeks near either edge and keeps the header label in sync with what is visible.
- * The URL hash remembers the position, so coming back from a ride page returns to the same weeks.
+ * Keeps the header in sync with what is visible. The URL hash remembers the position, so coming
+ * back from a ride page returns to the same weeks.
  */
-function onScroll() {
-    const container = el("calendar");
-    if (container.scrollTop < LOAD_MARGIN_PX) prependWeeks(WEEKS_PER_LOAD);
-    if (container.scrollTop + container.clientHeight > container.scrollHeight - LOAD_MARGIN_PX) {
-        appendWeeks(WEEKS_PER_LOAD);
-    }
+function updateLabels() {
     const top = topWeek();
     el("range-label").textContent = monthYear.format(addDays(top, 3));
     el("jump-date").value = dayKey(top);
     history.replaceState(null, "", `#${dayKey(addDays(top, 7))}`); // goTo() shows this week second
 }
 
-/** Re-reads the trainings from the server and redraws, staying on the same weeks. */
-async function refresh() {
+/** Loads more weeks when the scroll gets near either edge. */
+function onScroll() {
+    updateLabels();
+    const container = el("calendar");
+    if (container.scrollTop < LOAD_MARGIN_PX) {
+        guarded(() => prependWeeks(WEEKS_PER_LOAD));
+    } else if (container.scrollTop + container.clientHeight > container.scrollHeight - LOAD_MARGIN_PX) {
+        guarded(() => appendWeeks(WEEKS_PER_LOAD));
+    }
+}
+
+/** Fetches the weeks on screen again (after uploads or the reload button), staying on the same weeks. */
+async function refresh(reload = false) {
     const top = topWeek();
-    await loadActivities(true);
-    renderRange(state.first, state.last);
-    scrollToWeek(top);
+    el("reload").classList.add("spinning");
+    try {
+        if (reload) await reloadTrainings();
+        await guarded(async () => {
+            await renderRange(state.first, state.last);
+            await scrollToWeek(top);
+        });
+    } finally {
+        el("reload").classList.remove("spinning");
+    }
 }
 
 function wireEvents() {
@@ -201,36 +210,35 @@ function wireEvents() {
     el("next").addEventListener("click", () => shift(1));
     el("today").addEventListener("click", () => goTo(new Date()));
     el("latest").addEventListener("click", () => {
-        const latest = state.activities.at(-1);
-        if (latest) goTo(new Date(latest.start));
+        if (state.latestRideDate) goTo(parseKey(state.latestRideDate));
     });
     el("jump-date").addEventListener("change", (event) => {
         if (event.target.value) goTo(parseKey(event.target.value));
     });
-    el("reload").addEventListener("click", refresh);
-    setupAthleteMenu(refresh);
+    el("reload").addEventListener("click", () => refresh(true));
     el("calendar").addEventListener("scroll", onScroll, { passive: true });
     document.addEventListener("keydown", (event) => {
         if (event.target.tagName === "INPUT") return;
         if (event.key === "ArrowLeft") shift(-1);
         if (event.key === "ArrowRight") shift(1);
     });
+    setupAthleteMenu(() => refresh());
 }
 
 async function init() {
     el("cal-head").innerHTML = "<div></div>" + DAY_NAMES.map((d) => `<div>${d}</div>`).join("");
     wireEvents();
-    await loadActivities();
+    el("status").textContent = "Loading…";
     // index.html#YYYY-MM-DD opens on that week (used by the ride page's "Back to calendar").
     const hash = location.hash.slice(1);
     if (/^\d{4}-\d{2}-\d{2}$/.test(hash)) {
-        goTo(parseKey(hash));
+        await goTo(parseKey(hash));
         return;
     }
-    // Otherwise open on today, unless nothing has been ridden recently: then show the latest training.
-    const latest = state.activities.at(-1);
-    const recent = latest && Date.now() - latest.start < 28 * 86400000;
-    goTo(latest && !recent ? new Date(latest.start) : new Date());
+    await goTo(new Date());
+    // Nothing ridden in the last four weeks: show the latest training instead of empty weeks.
+    const latest = state.latestRideDate && parseKey(state.latestRideDate);
+    if (latest && new Date() - latest > 28 * 86400000) await goTo(latest);
 }
 
 init();
